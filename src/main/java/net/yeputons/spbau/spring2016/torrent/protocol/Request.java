@@ -31,7 +31,9 @@ public abstract class Request<T> {
         }
         try {
             return (Request<?>) readFromMethod.invoke(null, in);
-        } catch (IllegalAccessException | InvocationTargetException e) {
+        } catch (InvocationTargetException e) {
+            throw (IOException) e.getCause();
+        } catch (IllegalAccessException  e) {
             throw new RuntimeException(e);
         }
     }

@@ -5,7 +5,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.util.Objects;
 
-public class FileEntry {
+public class FileEntry implements  ProtocolEntity {
     private int id;
     private String name;
     private long size;
