@@ -1,4 +1,4 @@
-package ru.spbau.mit;
+package net.yeputons.spbau.spring2016.torrent;
 
 import org.junit.Test;
 
