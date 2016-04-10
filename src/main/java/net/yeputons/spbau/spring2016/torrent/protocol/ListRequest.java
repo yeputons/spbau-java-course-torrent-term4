@@ -35,7 +35,7 @@ public class ListRequest extends Request<List<FileEntry>> {
         return entries;
     }
 
-    public static Request<List<FileEntry>> readFrom(DataInputStream in) throws IOException {
+    public static ListRequest readFrom(DataInputStream in) throws IOException {
         return new ListRequest();
     }
 
