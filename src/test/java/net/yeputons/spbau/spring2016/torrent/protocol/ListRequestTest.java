@@ -6,7 +6,7 @@ import java.util.List;
 public class ListRequestTest extends RequestTest<List<FileEntry>> {
     // CHECKSTYLE.OFF: MagicNumber
     @Override
-    protected Request<List<FileEntry>> getRequest() {
+    protected ListRequest getRequest() {
         return new ListRequest();
     }
 
