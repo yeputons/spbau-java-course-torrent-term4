@@ -29,8 +29,10 @@ public abstract class RequestTest<T> {
             Request<T> request = getRequest();
             if (request instanceof ServerRequest) {
                 assertEquals(request, ServerRequest.readRequest(new DataInputStream(in)));
+            } else  if (request instanceof ClientRequest) {
+                assertEquals(request, ClientRequest.readRequest(new DataInputStream(in)));
             } else {
-                throw new AssertionError("request is not ServerRequest");
+                throw new AssertionError("request is neither ServerRequest nor ClientRequest");
             }
         }
     }
