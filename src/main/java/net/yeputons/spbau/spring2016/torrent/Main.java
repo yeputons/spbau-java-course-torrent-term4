@@ -1,5 +1,7 @@
 package net.yeputons.spbau.spring2016.torrent;
 
+import java.util.Arrays;
+
 public final class Main {
     private Main() {
     }
@@ -9,16 +11,19 @@ public final class Main {
             help();
         }
         if (args[0].equals("server")) {
-            if (args.length < 2) {
-                help();
+            if (args.length != 1) {
+                System.err.println("No extra arguments expected for server");
             }
-            new TrackerServer(Integer.parseInt(args[1])).run();
+            new TrackerServer().run();
+        } else if (args[0].equals("client")) {
+            new ConsoleClient(Arrays.copyOfRange(args, 1, args.length)).run();
+        } else {
+            help();
         }
     }
 
     private static void help() {
-        System.err.println("Expected arguments: server [other-arguments]");
-        System.err.println("Server's argument: <port>");
+        System.err.println("Expected arguments: (server|client) [extra]");
         System.exit(1);
     }
 }
