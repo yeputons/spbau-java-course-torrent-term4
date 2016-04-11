@@ -21,6 +21,8 @@ public class TrackerServer implements Runnable {
 
     private Path autoSaveStorage;
 
+    private ServerSocket server;
+
     public TrackerServer() {
         this(DEFAULT_PORT);
     }
@@ -75,7 +77,7 @@ public class TrackerServer implements Runnable {
     @Override
     public void run() {
         try {
-            ServerSocket server = new ServerSocket(port);
+            server = new ServerSocket(port);
             while (!Thread.interrupted()) {
                 final Socket client = server.accept();
                 new Thread(() -> {
@@ -131,5 +133,9 @@ public class TrackerServer implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void shutdown() throws IOException {
+        server.close();
     }
 }
