@@ -6,37 +6,28 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
 import java.util.Map;
 
 public abstract class Request<T> {
-    private static final Map<Integer, Method> REQUEST_TYPES = new HashMap<>();
-
-    static {
-        registerRequestType(ListRequest.class);
-        registerRequestType(UploadRequest.class);
-        registerRequestType(SourcesRequest.class);
-        registerRequestType(UpdateRequest.class);
-    }
-
-    static synchronized void registerRequestType(Class<? extends Request> klass) {
+    protected static void registerRequestType(Map<Integer, Method> requestTypes, Class<? extends Request> klass) {
         try {
             int requestId = getRequestId(klass);
-            if (REQUEST_TYPES.containsKey(getRequestId(klass))) {
+            if (requestTypes.containsKey(getRequestId(klass))) {
                 throw new IllegalArgumentException("Request with id " + requestId + " is already present");
             }
-            REQUEST_TYPES.put(requestId, klass.getMethod("readFrom", DataInputStream.class));
+            requestTypes.put(requestId, klass.getMethod("readFrom", DataInputStream.class));
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
     }
 
-    static Request<?> readRequest(DataInputStream in) throws IOException {
+    protected static Request<?> readRequest(Map<Integer, Method> requestTypes, DataInputStream in)
+            throws IOException {
         int id = in.read();
         if (id == -1) {
             throw new EOFException();
         }
-        Method readFromMethod = REQUEST_TYPES.get(id);
+        Method readFromMethod = requestTypes.get(id);
         if (readFromMethod == null) {
             throw new UnknownRequestIdException();
         }

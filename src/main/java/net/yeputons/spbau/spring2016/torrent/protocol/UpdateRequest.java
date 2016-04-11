@@ -8,7 +8,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class UpdateRequest extends Request<Boolean> {
+public class UpdateRequest extends ServerRequest<Boolean> {
     public static final int REQUEST_ID = 4;
 
     private int seedPort;

@@ -6,7 +6,7 @@ import java.io.DataOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ListRequest extends Request<List<FileEntry>> {
+public class ListRequest extends ServerRequest<List<FileEntry>> {
     public static final int REQUEST_ID = 1;
 
     @Override

@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class SourcesRequest extends Request<List<InetSocketAddress>> {
+public class SourcesRequest extends ServerRequest<List<InetSocketAddress>> {
     public static final int REQUEST_ID = 3;
 
     private int fileId;

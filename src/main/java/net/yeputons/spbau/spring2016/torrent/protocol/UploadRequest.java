@@ -5,7 +5,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Objects;
 
-public class UploadRequest extends Request<Integer> {
+public class UploadRequest extends ServerRequest<Integer> {
     public static final int REQUEST_ID = 2;
 
     private String fileName;

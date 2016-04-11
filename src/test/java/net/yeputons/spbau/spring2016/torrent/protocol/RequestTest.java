@@ -26,7 +26,12 @@ public abstract class RequestTest<T> {
     @Test
     public void testReadFrom() throws IOException {
         try (ByteArrayInputStream in = new ByteArrayInputStream(getSerializedRequest())) {
-            assertEquals(getRequest(), Request.readRequest(new DataInputStream(in)));
+            Request<T> request = getRequest();
+            if (request instanceof ServerRequest) {
+                assertEquals(request, ServerRequest.readRequest(new DataInputStream(in)));
+            } else {
+                throw new AssertionError("request is not ServerRequest");
+            }
         }
     }
 
