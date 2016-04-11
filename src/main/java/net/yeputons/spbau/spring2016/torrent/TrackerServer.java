@@ -16,7 +16,7 @@ public class TrackerServer implements Runnable {
     public static final int DEFAULT_PORT = 8081;
 
     private final List<FileEntry> files = new ArrayList<>();
-    private final AtomicInteger freeFileId = new AtomicInteger(1);
+    private int freeFileId = 1;
     private final SeedersTracker seeders = new SeedersTracker(60 * 1000);
 
     private final int port;
@@ -48,8 +48,10 @@ public class TrackerServer implements Runnable {
 
                                 @Override
                                 public void accept(UploadRequest r) throws IOException {
-                                    int id = freeFileId.getAndIncrement();
+                                    int id;
                                     synchronized (files) {
+                                        id = freeFileId;
+                                        freeFileId++;
                                         files.add(new FileEntry(id, r.getFileName(), r.getSize()));
                                     }
                                     r.answerTo(out, id);
