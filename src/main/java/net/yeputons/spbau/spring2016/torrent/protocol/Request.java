@@ -12,9 +12,20 @@ import java.util.Map;
 public abstract class Request<T> {
     private static final Map<Integer, Method> REQUEST_TYPES = new HashMap<>();
 
+    static {
+        registerRequestType(ListRequest.class);
+        registerRequestType(UploadRequest.class);
+        registerRequestType(SourcesRequest.class);
+        registerRequestType(UpdateRequest.class);
+    }
+
     static synchronized void registerRequestType(Class<? extends Request> klass) {
         try {
-            REQUEST_TYPES.put(getRequestId(klass), klass.getMethod("readFrom", DataInputStream.class));
+            int requestId = getRequestId(klass);
+            if (REQUEST_TYPES.containsKey(getRequestId(klass))) {
+                throw new IllegalArgumentException("Request with id " + requestId + " is already present");
+            }
+            REQUEST_TYPES.put(requestId, klass.getMethod("readFrom", DataInputStream.class));
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
         }

@@ -9,10 +9,6 @@ import java.util.List;
 public class ListRequest extends Request<List<FileEntry>> {
     public static final int REQUEST_ID = 1;
 
-    static {
-        Request.registerRequestType(ListRequest.class);
-    }
-
     @Override
     public boolean equals(Object o) {
         return o != null && getClass() == o.getClass();

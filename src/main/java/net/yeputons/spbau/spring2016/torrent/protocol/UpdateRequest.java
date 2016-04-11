@@ -11,10 +11,6 @@ import java.util.Objects;
 public class UpdateRequest extends Request<Boolean> {
     public static final int REQUEST_ID = 4;
 
-    static {
-        Request.registerRequestType(UpdateRequest.class);
-    }
-
     private int seedPort;
     private List<Integer> seedingFiles;
 

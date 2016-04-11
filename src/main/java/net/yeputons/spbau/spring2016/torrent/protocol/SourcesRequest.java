@@ -11,10 +11,6 @@ import java.util.Objects;
 public class SourcesRequest extends Request<List<InetSocketAddress>> {
     public static final int REQUEST_ID = 3;
 
-    static {
-        Request.registerRequestType(SourcesRequest.class);
-    }
-
     private int fileId;
 
     private SourcesRequest() {

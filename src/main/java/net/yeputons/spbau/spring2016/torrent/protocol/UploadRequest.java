@@ -8,10 +8,6 @@ import java.util.Objects;
 public class UploadRequest extends Request<Integer> {
     public static final int REQUEST_ID = 2;
 
-    static {
-        Request.registerRequestType(UploadRequest.class);
-    }
-
     private String fileName;
     private long size;
 
