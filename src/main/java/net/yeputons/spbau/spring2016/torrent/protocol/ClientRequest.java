@@ -11,6 +11,7 @@ public abstract class ClientRequest<T> extends Request<T> {
 
     static {
         registerRequestType(REQUEST_TYPES, StatRequest.class);
+        registerRequestType(REQUEST_TYPES, GetRequest.class);
     }
 
     public static Request<?> readRequest(DataInputStream in) throws IOException {
