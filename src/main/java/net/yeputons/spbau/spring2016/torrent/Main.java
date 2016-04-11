@@ -5,6 +5,20 @@ public final class Main {
     }
 
     public static void main(String[] args) {
-        throw new RuntimeException();
+        if (args.length < 1) {
+            help();
+        }
+        if (args[0].equals("server")) {
+            if (args.length < 2) {
+                help();
+            }
+            new TrackerServer(Integer.parseInt(args[1])).run();
+        }
+    }
+
+    private static void help() {
+        System.err.println("Expected arguments: server [other-arguments]");
+        System.err.println("Server's argument: <port>");
+        System.exit(1);
     }
 }
