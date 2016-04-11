@@ -79,4 +79,9 @@ public class UpdateRequest extends ServerRequest<Boolean> {
     public void answerTo(DataOutputStream out, Boolean data) throws IOException {
         out.writeBoolean(data);
     }
+
+    @Override
+    public void visit(ServerRequestVisitor visitor) throws IOException {
+        visitor.accept(this);
+    }
 }

@@ -83,4 +83,9 @@ public class GetRequest extends ClientRequest<ByteBuffer> {
     public void answerTo(DataOutputStream out, ByteBuffer data) throws IOException {
         out.write(data.array(), data.arrayOffset(), data.limit() - data.arrayOffset());
     }
+
+    @Override
+    public void visit(ClientRequestVisitor visitor) throws IOException {
+        visitor.accept(this);
+    }
 }

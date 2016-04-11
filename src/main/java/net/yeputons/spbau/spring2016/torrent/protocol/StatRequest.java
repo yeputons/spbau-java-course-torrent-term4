@@ -71,4 +71,9 @@ public class StatRequest extends ClientRequest<List<Integer>> {
             out.writeInt(id);
         }
     }
+
+    @Override
+    public void visit(ClientRequestVisitor visitor) throws IOException {
+        visitor.accept(this);
+    }
 }

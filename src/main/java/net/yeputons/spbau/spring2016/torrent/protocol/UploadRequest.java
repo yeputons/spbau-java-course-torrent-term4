@@ -68,4 +68,9 @@ public class UploadRequest extends ServerRequest<Integer> {
     public void answerTo(DataOutputStream out, Integer data) throws IOException {
         out.writeInt(data);
     }
+
+    @Override
+    public void visit(ServerRequestVisitor visitor) throws IOException {
+        visitor.accept(this);
+    }
 }

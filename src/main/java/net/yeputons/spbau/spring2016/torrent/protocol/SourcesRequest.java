@@ -77,4 +77,9 @@ public class SourcesRequest extends ServerRequest<List<InetSocketAddress>> {
             out.writeShort(addr.getPort());
         }
     }
+
+    @Override
+    public void visit(ServerRequestVisitor visitor) throws IOException {
+        visitor.accept(this);
+    }
 }

@@ -42,4 +42,9 @@ public class ListRequest extends ServerRequest<List<FileEntry>> {
             e.writeTo(out);
         }
     }
+
+    @Override
+    public void visit(ServerRequestVisitor visitor) throws IOException {
+        visitor.accept(this);
+    }
 }

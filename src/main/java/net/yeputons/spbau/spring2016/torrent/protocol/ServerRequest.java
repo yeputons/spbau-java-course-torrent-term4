@@ -16,7 +16,9 @@ public abstract class ServerRequest<T> extends Request<T> {
         registerRequestType(REQUEST_TYPES, UpdateRequest.class);
     }
 
-    public static Request<?> readRequest(DataInputStream in) throws IOException {
-        return readRequest(REQUEST_TYPES, in);
+    public abstract void visit(ServerRequestVisitor visitor) throws IOException;
+
+    public static ServerRequest<?> readRequest(DataInputStream in) throws IOException {
+        return (ServerRequest<?>) readRequest(REQUEST_TYPES, in);
     }
 }
