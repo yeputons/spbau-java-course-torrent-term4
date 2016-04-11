@@ -4,6 +4,7 @@ import net.yeputons.spbau.spring2016.torrent.protocol.*;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -36,7 +37,7 @@ public class TrackerServer implements Runnable {
                 new Thread(() -> {
                     try (DataInputStream in = new DataInputStream(client.getInputStream());
                          DataOutputStream out = new DataOutputStream(client.getOutputStream())) {
-                        for (;;) {
+                        for (; ; ) {
                             ServerRequest.readRequest(in).visit(new ServerRequestVisitor() {
                                 @Override
                                 public void accept(ListRequest r) throws IOException {
@@ -69,6 +70,7 @@ public class TrackerServer implements Runnable {
                                 }
                             });
                         }
+                    } catch (EOFException ignored) {
                     } catch (IOException e) {
                         e.printStackTrace();
                     } finally {
