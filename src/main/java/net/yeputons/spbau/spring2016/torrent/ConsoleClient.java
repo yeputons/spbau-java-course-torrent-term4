@@ -37,24 +37,10 @@ public class ConsoleClient implements Runnable {
         try (TorrentConnection connection = new TorrentConnection(addr)) {
             switch (operation) {
                 case "list":
-                    if (args.size() != 0) {
-                        help();
-                    }
-                    System.out.printf("%9s %19s %s\n", "ID", "SIZE", "NAME");
-                    for (FileEntry e : connection.makeRequest(new ListRequest())) {
-                        System.out.printf("%9d %19d %s\n", e.getId(), e.getSize(), e.getName());
-                    }
+                    doList(connection);
                     break;
                 case "newfile":
-                    if (args.size() != 1) {
-                        help();
-                    }
-                    Path p = Paths.get(args.removeFirst());
-                    String fileName = p.getFileName().toString();
-                    long size = Files.size(p);
-                    System.out.printf("Adding file %s (%d bytes)... ", fileName, size);
-                    int id = connection.makeRequest(new UploadRequest(fileName, size));
-                    System.out.printf("id=%d\n", id);
+                    doNewFile(connection);
                     break;
                 default:
                     help();
@@ -62,5 +48,27 @@ public class ConsoleClient implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void doList(TorrentConnection connection) throws IOException {
+        if (args.size() != 0) {
+            help();
+        }
+        System.out.printf("%9s %19s %s\n", "ID", "SIZE", "NAME");
+        for (FileEntry e : connection.makeRequest(new ListRequest())) {
+            System.out.printf("%9d %19d %s\n", e.getId(), e.getSize(), e.getName());
+        }
+    }
+
+    private void doNewFile(TorrentConnection connection) throws IOException {
+        if (args.size() != 1) {
+            help();
+        }
+        Path p = Paths.get(args.removeFirst());
+        String fileName = p.getFileName().toString();
+        long size = Files.size(p);
+        System.out.printf("Adding file %s (%d bytes)... ", fileName, size);
+        int id = connection.makeRequest(new UploadRequest(fileName, size));
+        System.out.printf("id=%d\n", id);
     }
 }
