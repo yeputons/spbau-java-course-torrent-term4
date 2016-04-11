@@ -3,9 +3,12 @@ package net.yeputons.spbau.spring2016.torrent.protocol;
 import java.io.IOException;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.Serializable;
 import java.util.Objects;
 
-public class FileEntry implements  ProtocolEntity {
+public class FileEntry implements ProtocolEntity, Serializable {
+    private static final long serialVersionUID = 1L;
+
     private int id;
     private String name;
     private long size;

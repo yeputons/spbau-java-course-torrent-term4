@@ -28,7 +28,7 @@ public class TorrentConnection implements Closeable {
         }
     }
 
-    public <T> T makeRequest(Request<T> r) throws IOException {
+    public synchronized <T> T makeRequest(Request<T> r) throws IOException {
         return r.makeRequest(in, out);
     }
 
