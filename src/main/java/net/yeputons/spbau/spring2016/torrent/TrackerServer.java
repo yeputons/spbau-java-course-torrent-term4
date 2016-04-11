@@ -12,12 +12,17 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class TrackerServer implements Runnable {
+    public static final int DEFAULT_PORT = 8081;
+
     private final List<FileEntry> files = new ArrayList<>();
     private final AtomicInteger freeFileId = new AtomicInteger(1);
     private final SeedersTracker seeders = new SeedersTracker(60 * 1000);
 
     private final int port;
 
+    public TrackerServer() {
+        this(DEFAULT_PORT);
+    }
     public TrackerServer(int port) {
         this.port = port;
     }
