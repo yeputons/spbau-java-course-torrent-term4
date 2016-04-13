@@ -44,10 +44,11 @@ public class TorrentClient implements Runnable {
             }).start();
         }
 
-        try (ServerSocket listener = new ServerSocket(0)) {
+        try (ServerSocket listener = new ServerSocket()) {
             new Thread(() -> {
                 while (true) {
                     try {
+                        listener.bind(new InetSocketAddress("0.0.0.0", 0));
                         updateTracker(listener.getLocalPort());
                     } catch (IOException e) {
                         e.printStackTrace();
