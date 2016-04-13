@@ -9,7 +9,7 @@ public class FileDescription implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final FileEntry entry;
-    private final int partSize;
+    private final int partSize, partsCount;
     private final BitSet downloaded;
 
     public FileDescription(FileEntry entry, int partSize) {
@@ -19,7 +19,8 @@ public class FileDescription implements Serializable {
         if (partsCount > Integer.MAX_VALUE) {
             throw new IllegalArgumentException("partsCount is greater than Integer.MAX_VALUE");
         }
-        downloaded = new BitSet((int) partsCount);
+        this.partsCount = (int) partsCount;
+        downloaded = new BitSet(this.partsCount);
     }
 
     @Override
@@ -27,7 +28,7 @@ public class FileDescription implements Serializable {
         return "FileDescription{"
                 + "entry=" + entry
                 + ", partSize=" + partSize
-                + ", downloaded=" + downloaded.cardinality() + "/" + downloaded.size()
+                + ", downloaded=" + downloaded.cardinality() + "/" + getPartsCount()
                 + '}';
     }
 
@@ -43,14 +44,18 @@ public class FileDescription implements Serializable {
         return downloaded;
     }
 
+    public int getPartsCount() {
+        return partsCount;
+    }
+
     public int getPartStart(int partId) {
         return partId * partSize;
     }
 
     public int getPartSize(int partId) {
-        if (partId + 1 < downloaded.size()) {
+        if (partId + 1 < getPartsCount()) {
             return partSize;
         }
-        return (int) (entry.getSize() - (downloaded.size() - 1) * partSize);
+        return (int) (entry.getSize() - (getPartsCount() - 1) * partSize);
     }
 }
