@@ -82,7 +82,8 @@ public class TrackerServer implements Runnable {
                 if (shuttedDown) {
                     return;
                 }
-                server = new ServerSocket(port);
+                server = new ServerSocket();
+                server.bind(new InetSocketAddress("0.0.0.0", port));
             }
             while (!Thread.interrupted()) {
                 final Socket client = server.accept();
