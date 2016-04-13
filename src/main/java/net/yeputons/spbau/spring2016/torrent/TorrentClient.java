@@ -44,7 +44,7 @@ public class TorrentClient implements Runnable {
             }).start();
         }
 
-        try (ServerSocket listener = new ServerSocket()) {
+        try (ServerSocket listener = new ServerSocket(0)) {
             new Thread(() -> {
                 while (true) {
                     try {
