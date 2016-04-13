@@ -33,8 +33,7 @@ public class TrackerServerTest {
         );
         // CHECKSTYLE.ON: MagicNumber
 
-        TrackerServer server = new TrackerServer(SERVER_PORT);
-        server.setAutoSaveStorage(storage);
+        TrackerServer server = new TrackerServer(SERVER_PORT, storage);
         Thread t = new Thread(server);
         try {
             t.start();
@@ -51,8 +50,7 @@ public class TrackerServerTest {
             t.join();
         }
 
-        server = new TrackerServer(SERVER_PORT);
-        server.restoreFrom(storage);
+        server = new TrackerServer(SERVER_PORT, storage);
         t = new Thread(server);
         try {
             t.start();

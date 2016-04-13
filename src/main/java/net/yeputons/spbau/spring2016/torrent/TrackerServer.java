@@ -6,72 +6,42 @@ import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
 public class TrackerServer implements Runnable {
     public static final int DEFAULT_PORT = 8081;
 
-    private final List<FileEntry> files = new ArrayList<>();
-    private int freeFileId = 1;
+    private static class State implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private final List<FileEntry> files = new ArrayList<>();
+        private int freeFileId = 1;
+    }
+
+    private final StateHolder<State> stateHolder;
     private final SeedersTracker seeders = new SeedersTracker(60 * 1000);
 
     private final int port;
-
-    private Path autoSaveStorage;
 
     private ServerSocket server;
     private boolean shuttedDown = false;
 
     public TrackerServer() {
-        this(DEFAULT_PORT);
+        this(DEFAULT_PORT, null);
     }
     public TrackerServer(int port) {
+        this(port, null);
+    }
+    public TrackerServer(Path storage) {
+        this(DEFAULT_PORT, storage);
+    }
+    public TrackerServer(int port, Path storage) {
         this.port = port;
-    }
-
-    public Path getAutoSaveStorage() {
-        return autoSaveStorage;
-    }
-
-    public void setAutoSaveStorage(Path autoSaveStorage) {
-        this.autoSaveStorage = autoSaveStorage;
-    }
-
-    private void autoSave() {
-        Path storage = autoSaveStorage;
         if (storage != null) {
-            try {
-                saveTo(storage);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public void restoreFrom(Path storage) throws IOException {
-        synchronized (files) {
-            try (DataInputStream in = new DataInputStream(Files.newInputStream(storage))) {
-                freeFileId = in.readInt();
-                int count = in.readInt();
-                files.clear();
-                for (int i = 0; i < count; i++) {
-                    files.add(FileEntry.readFrom(in));
-                }
-            }
-        }
-    }
-
-    public void saveTo(Path storage) throws IOException {
-        synchronized (files) {
-            try (DataOutputStream out = new DataOutputStream(Files.newOutputStream(storage))) {
-                out.writeInt(freeFileId);
-                out.writeInt(files.size());
-                for (FileEntry e : files) {
-                    e.writeTo(out);
-                }
-            }
+            stateHolder = new StateFileHolder<State>(storage, new State());
+        } else {
+            stateHolder = new StateMemoryHolder<State>(new State());
         }
     }
 
@@ -94,19 +64,21 @@ public class TrackerServer implements Runnable {
                             ServerRequest.readRequest(in).visit(new ServerRequestVisitor() {
                                 @Override
                                 public void accept(ListRequest r) throws IOException {
-                                    synchronized (files) {
-                                        r.answerTo(out, files);
+                                    State s = stateHolder.getState();
+                                    synchronized (s) {
+                                        r.answerTo(out, s.files);
                                     }
                                 }
 
                                 @Override
                                 public void accept(UploadRequest r) throws IOException {
                                     int id;
-                                    synchronized (files) {
-                                        id = freeFileId;
-                                        freeFileId++;
-                                        files.add(new FileEntry(id, r.getFileName(), r.getSize()));
-                                        autoSave();
+                                    State s = stateHolder.getState();
+                                    synchronized (s) {
+                                        id = s.freeFileId;
+                                        s.freeFileId++;
+                                        s.files.add(new FileEntry(id, r.getFileName(), r.getSize()));
+                                        stateHolder.save();
                                     }
                                     r.answerTo(out, id);
                                 }
