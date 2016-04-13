@@ -22,9 +22,8 @@ public class TrackerServer implements Runnable {
     private final StateHolder<State> stateHolder;
     private final SeedersTracker seeders = new SeedersTracker(60 * 1000);
 
-    private final int port;
-
     private ServerSocket server;
+    private final int port;
     private boolean shuttedDown = false;
 
     public TrackerServer() {
