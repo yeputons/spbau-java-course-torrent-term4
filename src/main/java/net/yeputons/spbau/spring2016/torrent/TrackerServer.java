@@ -22,6 +22,7 @@ public class TrackerServer implements Runnable {
     private Path autoSaveStorage;
 
     private ServerSocket server;
+    private boolean shuttedDown = false;
 
     public TrackerServer() {
         this(DEFAULT_PORT);
@@ -77,7 +78,12 @@ public class TrackerServer implements Runnable {
     @Override
     public void run() {
         try {
-            server = new ServerSocket(port);
+            synchronized (this) {
+                if (shuttedDown) {
+                    return;
+                }
+                server = new ServerSocket(port);
+            }
             while (!Thread.interrupted()) {
                 final Socket client = server.accept();
                 new Thread(() -> {
@@ -136,6 +142,11 @@ public class TrackerServer implements Runnable {
     }
 
     public void shutdown() throws IOException {
-        server.close();
+        synchronized (this) {
+            if (server != null) {
+                server.close();
+            }
+            shuttedDown = true;
+        }
     }
 }
