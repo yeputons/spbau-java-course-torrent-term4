@@ -17,7 +17,7 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class TrackerServerTest {
-    private static final int SERVER_PORT = 8123;
+    private static final int SERVER_PORT = 12589;
 
     @Rule
     public TemporaryFolder folder = new TemporaryFolder();
