@@ -103,7 +103,7 @@ public class ConsoleClient implements Runnable {
 
         ClientState state = readState();
         FileDescription description = new FileDescription(new FileEntry(id, fileName, size), PART_SIZE);
-        description.getDownloaded().flip(0, description.getDownloaded().size());
+        description.getDownloaded().flip(0, description.getPartsCount());
         state.getFiles().put(id, description);
         writeState(state);
     }

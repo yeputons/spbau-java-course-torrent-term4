@@ -88,8 +88,9 @@ public class TorrentClient implements Runnable {
         FileEntry entry = description.getEntry();
         int fileId = entry.getId();
         BitSet downloaded = description.getDownloaded();
+        int partsCount = description.getPartsCount();
 
-        while (downloaded.cardinality() < downloaded.size()) {
+        while (downloaded.cardinality() < partsCount) {
             List<InetSocketAddress> sources = tracker.makeRequest(new SourcesRequest(fileId));
             for (InetSocketAddress source : sources) {
                 try (TorrentConnection peer = new TorrentConnection(source)) {
