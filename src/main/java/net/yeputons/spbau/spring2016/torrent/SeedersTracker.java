@@ -13,36 +13,32 @@ public class SeedersTracker {
     }
     // seeders[fileId][seederAddress] -> lastUpdated
 
-    public List<InetSocketAddress> getSources(int fileId) {
-        synchronized (seeders) {
-            Map<InetSocketAddress, Long> fileSeeders = seeders.get(fileId);
-            if (fileSeeders == null) {
-                return Collections.emptyList();
-            }
-            List<InetSocketAddress> result = new ArrayList<>();
-            for (Iterator<Map.Entry<InetSocketAddress, Long>> it
-                    = fileSeeders.entrySet().iterator();
-                 it.hasNext();
-                 ) {
-                Map.Entry<InetSocketAddress, Long> seeder = it.next();
-                if (seeder.getValue() + seederTimeoutMsecs < System.currentTimeMillis()) {
-                    it.remove();
-                } else {
-                    result.add(seeder.getKey());
-                }
-            }
-            return result;
+    public synchronized List<InetSocketAddress> getSources(int fileId) {
+        Map<InetSocketAddress, Long> fileSeeders = seeders.get(fileId);
+        if (fileSeeders == null) {
+            return Collections.emptyList();
         }
+        List<InetSocketAddress> result = new ArrayList<>();
+        for (Iterator<Map.Entry<InetSocketAddress, Long>> it
+                = fileSeeders.entrySet().iterator();
+             it.hasNext();
+             ) {
+            Map.Entry<InetSocketAddress, Long> seeder = it.next();
+            if (seeder.getValue() + seederTimeoutMsecs < System.currentTimeMillis()) {
+                it.remove();
+            } else {
+                result.add(seeder.getKey());
+            }
+        }
+        return result;
     }
 
-    public void updateSource(int fileId, InetSocketAddress address) {
-        synchronized (seeders) {
-            Map<InetSocketAddress, Long> fileSeeders = seeders.get(fileId);
-            if (fileSeeders == null) {
-                fileSeeders = new HashMap<>();
-                seeders.put(fileId, fileSeeders);
-            }
-            fileSeeders.put(address, System.currentTimeMillis());
+    public synchronized void updateSource(int fileId, InetSocketAddress address) {
+        Map<InetSocketAddress, Long> fileSeeders = seeders.get(fileId);
+        if (fileSeeders == null) {
+            fileSeeders = new HashMap<>();
+            seeders.put(fileId, fileSeeders);
         }
+        fileSeeders.put(address, System.currentTimeMillis());
     }
 }
