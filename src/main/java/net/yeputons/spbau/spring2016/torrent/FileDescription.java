@@ -9,7 +9,8 @@ public class FileDescription implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final FileEntry entry;
-    private final int partSize, partsCount;
+    private final int partSize;
+    private final int partsCount;
     private final BitSet downloaded;
 
     public FileDescription(FileEntry entry, int partSize) {

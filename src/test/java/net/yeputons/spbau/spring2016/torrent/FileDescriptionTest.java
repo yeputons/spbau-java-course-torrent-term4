@@ -6,6 +6,7 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class FileDescriptionTest {
+    // CHECKSTYLE.OFF: MagicNumber
     @Test
     public void testEvenParts() {
         FileDescription description = new FileDescription(new FileEntry(1, "test", 80), 40);
@@ -35,4 +36,5 @@ public class FileDescriptionTest {
         assertEquals(0, description.getPartStart(0));
         assertEquals(30, description.getPartSize(0));
     }
+    // CHECKSTYLE.ON: MagicNumber
 }
