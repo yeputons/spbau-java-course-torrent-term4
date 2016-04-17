@@ -6,16 +6,17 @@ import java.io.Closeable;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketAddress;
 
 public class TorrentConnection implements Closeable {
     private final Socket socket;
     private final DataInputStream in;
     private final DataOutputStream out;
 
-    public TorrentConnection(InetSocketAddress address) throws IOException {
-        socket = new Socket(address.getAddress(), address.getPort());
+    public TorrentConnection(SocketAddress address) throws IOException {
+        socket = new Socket();
+        socket.connect(address);
         try {
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
