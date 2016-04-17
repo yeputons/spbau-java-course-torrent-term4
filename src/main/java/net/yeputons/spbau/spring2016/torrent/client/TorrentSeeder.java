@@ -16,15 +16,23 @@ import java.util.Collections;
 import java.util.stream.Collectors;
 
 public class TorrentSeeder {
+    private static final int DEFAULT_UPDATE_INTERVEL = 1000;
+
     private final TorrentConnection tracker;
     private final ClientState state;
     private ServerSocket listener;
     private Thread updatingThread;
     private Thread listeningThread;
+    private final int updateInterval;
 
     public TorrentSeeder(TorrentConnection tracker, ClientState state) {
+        this(tracker, state, DEFAULT_UPDATE_INTERVEL);
+    }
+
+    public TorrentSeeder(TorrentConnection tracker, ClientState state, int updateInterval) {
         this.tracker = tracker;
         this.state = state;
+        this.updateInterval = updateInterval;
     }
 
     public void start() throws IOException {
@@ -35,7 +43,7 @@ public class TorrentSeeder {
         listener.bind(new InetSocketAddress("0.0.0.0", 0));
 
         updatingThread = new Thread(() -> {
-            while (true) {
+            while (!listener.isClosed()) {
                 try {
                     updateTracker(listener.getLocalPort());
                 } catch (IOException e) {
@@ -43,9 +51,7 @@ public class TorrentSeeder {
                     break;
                 }
                 try {
-                    // CHECKSTYLE.OFF: MagicNumber
-                    Thread.sleep(1000);
-                    // CHECKSTYLE.ON: MagicNumber
+                    Thread.sleep(updateInterval);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
