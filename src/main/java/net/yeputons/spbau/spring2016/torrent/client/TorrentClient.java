@@ -137,7 +137,7 @@ public class TorrentClient implements Runnable {
                 @Override
                 public void accept(StatRequest r) throws IOException {
                     synchronized (state) {
-                        FileDescription description = state.getFiles().get(r.getFileId());
+                        FileDescription description = state.getFileDescription(r.getFileId());
                         if (description != null) {
                             r.answerTo(out,
                                 description.getDownloaded().stream().boxed().collect(Collectors.toList()));
@@ -153,7 +153,7 @@ public class TorrentClient implements Runnable {
                     int partId = r.getPartId();
                     FileDescription description;
                     synchronized (state) {
-                        description = state.getFiles().get(fileId);
+                        description = state.getFileDescription(fileId);
                         if (description == null || !description.getDownloaded().get(r.getPartId())) {
                             peer.close();
                             return;
