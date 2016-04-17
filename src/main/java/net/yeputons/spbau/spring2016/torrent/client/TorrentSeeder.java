@@ -97,6 +97,7 @@ public class TorrentSeeder {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        updatingThread.interrupt();
     }
 
     public void join() throws InterruptedException {

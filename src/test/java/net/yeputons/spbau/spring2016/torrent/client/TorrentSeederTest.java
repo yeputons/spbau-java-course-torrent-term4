@@ -124,9 +124,7 @@ public class TorrentSeederTest {
     private TorrentSeeder createSeeder() throws IOException {
         TorrentConnection tracker = mock(TorrentConnection.class);
         when(tracker.makeRequest(any(UpdateRequest.class))).thenReturn(true);
-        // CHECKSTYLE.OFF: MagicNumber
-        TorrentSeeder seeder = new TorrentSeeder(tracker, state, 10);
-        // CHECKSTYLE.ON: MagicNumber
+        TorrentSeeder seeder = new TorrentSeeder(tracker, state);
         seeder.start();
         return seeder;
     }
