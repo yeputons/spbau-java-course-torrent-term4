@@ -1,4 +1,6 @@
-package net.yeputons.spbau.spring2016.torrent;
+package net.yeputons.spbau.spring2016.torrent.client;
+
+import net.yeputons.spbau.spring2016.torrent.FileDescription;
 
 import java.io.Serializable;
 import java.util.HashMap;

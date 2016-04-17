@@ -1,5 +1,8 @@
-package net.yeputons.spbau.spring2016.torrent;
+package net.yeputons.spbau.spring2016.torrent.client;
 
+import net.yeputons.spbau.spring2016.torrent.FileDescription;
+import net.yeputons.spbau.spring2016.torrent.TorrentConnection;
+import net.yeputons.spbau.spring2016.torrent.TrackerServer;
 import net.yeputons.spbau.spring2016.torrent.protocol.FileEntry;
 import net.yeputons.spbau.spring2016.torrent.protocol.ListRequest;
 import net.yeputons.spbau.spring2016.torrent.protocol.UploadRequest;

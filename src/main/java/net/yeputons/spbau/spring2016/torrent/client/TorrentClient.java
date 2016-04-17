@@ -1,5 +1,7 @@
-package net.yeputons.spbau.spring2016.torrent;
+package net.yeputons.spbau.spring2016.torrent.client;
 
+import net.yeputons.spbau.spring2016.torrent.FileDescription;
+import net.yeputons.spbau.spring2016.torrent.TorrentConnection;
 import net.yeputons.spbau.spring2016.torrent.protocol.*;
 
 import java.io.*;
@@ -27,8 +29,10 @@ public class TorrentClient implements Runnable {
             System.out.println(f);
 
             try {
-                files.put(f.getEntry().getId(), new RandomAccessFile(f.getEntry().getName(), "rw"));
-            } catch (FileNotFoundException e) {
+                RandomAccessFile file = new RandomAccessFile(f.getEntry().getName(), "rw");
+                file.setLength(f.getEntry().getSize());
+                files.put(f.getEntry().getId(), file);
+            } catch (IOException e) {
                 e.printStackTrace();
                 return;
             }
