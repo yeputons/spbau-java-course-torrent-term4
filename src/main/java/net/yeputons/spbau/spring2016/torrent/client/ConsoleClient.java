@@ -29,13 +29,13 @@ public class ConsoleClient implements Runnable {
 
     private ClientState readState() {
         if (!Files.isReadable(storage)) {
-            return new ClientState();
+            return new ClientState(Paths.get("."));
         }
         try (ObjectInputStream in = new ObjectInputStream(Files.newInputStream(storage))) {
             return (ClientState) in.readObject();
         } catch (ClassNotFoundException | IOException e) {
             e.printStackTrace();
-            return new ClientState();
+            return new ClientState(Paths.get("."));
         }
     }
 

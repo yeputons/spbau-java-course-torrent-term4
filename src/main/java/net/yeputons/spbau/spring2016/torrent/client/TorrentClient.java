@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 public class TorrentClient implements Runnable {
     private final TorrentConnection tracker;
     private final ClientState state;
-    private final Map<Integer, RandomAccessFile> files = new HashMap<>();
 
     public TorrentClient(TorrentConnection tracker, ClientState state) {
         this.tracker = tracker;
@@ -27,15 +26,6 @@ public class TorrentClient implements Runnable {
         System.out.println("Starting TorrentClient, files:");
         for (FileDescription f : state.getFiles().values()) {
             System.out.println(f);
-
-            try {
-                RandomAccessFile file = new RandomAccessFile(f.getEntry().getName(), "rw");
-                file.setLength(f.getEntry().getSize());
-                files.put(f.getEntry().getId(), file);
-            } catch (IOException e) {
-                e.printStackTrace();
-                return;
-            }
         }
 
         for (FileDescription f : state.getFiles().values()) {
@@ -104,7 +94,7 @@ public class TorrentClient implements Runnable {
                         if (!downloaded.get(partId)) {
                             ByteBuffer data = peer.makeRequest(
                                     new GetRequest(fileId, partId, description.getPartSize(partId)));
-                            RandomAccessFile file = files.get(fileId);
+                            RandomAccessFile file = state.getFile(fileId);
                             synchronized (file) {
                                 file.seek(description.getPartStart(partId));
                                 file.write(data.array());
@@ -127,7 +117,7 @@ public class TorrentClient implements Runnable {
 
     private void updateTracker(int seedingPort) throws IOException {
         tracker.makeRequest(new UpdateRequest(
-                seedingPort, files.keySet().stream().collect(Collectors.toList())));
+                seedingPort, state.getFiles().keySet().stream().collect(Collectors.toList())));
     }
 
     private void processPeer(final Socket peer, DataInputStream in, final DataOutputStream out)
@@ -159,7 +149,7 @@ public class TorrentClient implements Runnable {
                             return;
                         }
                     }
-                    RandomAccessFile file = files.get(r.getFileId());
+                    RandomAccessFile file = state.getFile(r.getFileId());
                     byte[] data = new byte[description.getPartSize(partId)];
                     synchronized (file) {
                         file.seek(description.getPartStart(partId));
