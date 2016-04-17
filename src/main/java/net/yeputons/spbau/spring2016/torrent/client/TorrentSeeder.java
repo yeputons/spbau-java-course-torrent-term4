@@ -11,6 +11,7 @@ import java.io.RandomAccessFile;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.stream.Collectors;
@@ -84,6 +85,10 @@ public class TorrentSeeder {
             }
         });
         listeningThread.start();
+    }
+
+    public SocketAddress getAddress() {
+        return listener.getLocalSocketAddress();
     }
 
     public void shutdown() {
