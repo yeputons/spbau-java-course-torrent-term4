@@ -80,6 +80,19 @@ public class TorrentSeeder {
         listeningThread.start();
     }
 
+    public void shutdown() {
+        try {
+            listener.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void join() throws InterruptedException {
+        updatingThread.join();
+        listeningThread.join();
+    }
+
     private void updateTracker(int seedingPort) throws IOException {
         tracker.makeRequest(new UpdateRequest(
                 seedingPort, state.getFiles().keySet().stream().collect(Collectors.toList())));
