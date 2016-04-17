@@ -1,5 +1,6 @@
 package net.yeputons.spbau.spring2016.torrent;
 
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Arrays;
 
@@ -17,7 +18,11 @@ public final class Main {
             }
 
             TrackerServer server = new TrackerServer(Paths.get("tracker-server-data.bin"));
-            server.run();
+            try {
+                server.start();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         } else if (args[0].equals("client")) {
             new ConsoleClient(Arrays.copyOfRange(args, 1, args.length)).run();
         } else {

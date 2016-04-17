@@ -34,9 +34,8 @@ public class TrackerServerTest {
         // CHECKSTYLE.ON: MagicNumber
 
         TrackerServer server = new TrackerServer(SERVER_PORT, storage);
-        Thread t = new Thread(server);
+        server.start();
         try {
-            t.start();
             try (TorrentConnection conn = new TorrentConnection(new InetSocketAddress("127.0.0.1", SERVER_PORT))) {
                 assertEquals(Collections.emptyList(), conn.makeRequest(new ListRequest()));
                 for (FileEntry e : expectedFiles) {
@@ -47,19 +46,18 @@ public class TrackerServerTest {
             }
         } finally {
             server.shutdown();
-            t.join();
+            server.join();
         }
 
         server = new TrackerServer(SERVER_PORT, storage);
-        t = new Thread(server);
+        server.start();
         try {
-            t.start();
             try (TorrentConnection conn = new TorrentConnection(new InetSocketAddress("127.0.0.1", SERVER_PORT))) {
                 assertEquals(expectedFiles, conn.makeRequest(new ListRequest()));
             }
         } finally {
             server.shutdown();
-            t.join();
+            server.join();
         }
     }
 }
