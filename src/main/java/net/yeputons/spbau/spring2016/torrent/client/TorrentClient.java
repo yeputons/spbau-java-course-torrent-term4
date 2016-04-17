@@ -1,30 +1,28 @@
 package net.yeputons.spbau.spring2016.torrent.client;
 
 import net.yeputons.spbau.spring2016.torrent.FileDescription;
+import net.yeputons.spbau.spring2016.torrent.StateHolder;
 import net.yeputons.spbau.spring2016.torrent.TorrentConnection;
 
 import java.io.*;
 
 public class TorrentClient implements Runnable {
     private final TorrentConnection tracker;
-    private final ClientState state;
+    private final StateHolder<ClientState> stateHolder;
     private TorrentSeeder seeder;
 
-    public TorrentClient(TorrentConnection tracker, ClientState state) {
+    public TorrentClient(TorrentConnection tracker, StateHolder<ClientState> stateHolder) {
         this.tracker = tracker;
-        this.state = state;
-        seeder = new TorrentSeeder(tracker, state);
+        this.stateHolder = stateHolder;
+        seeder = new TorrentSeeder(tracker, stateHolder.getState());
     }
 
     @Override
     public void run() {
         System.out.println("Starting TorrentClient, files:");
-        for (FileDescription f : state.getFiles().values()) {
+        for (FileDescription f : stateHolder.getState().getFiles().values()) {
             System.out.println(f);
-        }
-
-        for (FileDescription f : state.getFiles().values()) {
-            new TorrentLeecher(tracker, state, f).start();
+            new TorrentLeecher(tracker, stateHolder, f).start();
         }
 
         try {

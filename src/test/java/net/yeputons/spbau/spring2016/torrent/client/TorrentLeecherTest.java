@@ -1,6 +1,7 @@
 package net.yeputons.spbau.spring2016.torrent.client;
 
 import net.yeputons.spbau.spring2016.torrent.FileDescription;
+import net.yeputons.spbau.spring2016.torrent.StateMemoryHolder;
 import net.yeputons.spbau.spring2016.torrent.TorrentConnection;
 import net.yeputons.spbau.spring2016.torrent.protocol.*;
 import org.junit.Rule;
@@ -43,7 +44,7 @@ public class TorrentLeecherTest {
         Path downloadsDir = rootFolder.getRoot().toPath();
         ClientState state = new ClientState(downloadsDir);
         state.getFiles().put(fileDescription.getEntry().getId(), fileDescription);
-        TorrentLeecher leecher = new TorrentLeecher(tracker, state, fileDescription);
+        TorrentLeecher leecher = new TorrentLeecher(tracker, new StateMemoryHolder<>(state), fileDescription);
         leecher.start();
         leecher.join();
 

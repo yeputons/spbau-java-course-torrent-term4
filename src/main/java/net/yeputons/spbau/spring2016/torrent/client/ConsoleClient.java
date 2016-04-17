@@ -1,6 +1,7 @@
 package net.yeputons.spbau.spring2016.torrent.client;
 
 import net.yeputons.spbau.spring2016.torrent.FileDescription;
+import net.yeputons.spbau.spring2016.torrent.StateFileHolder;
 import net.yeputons.spbau.spring2016.torrent.TorrentConnection;
 import net.yeputons.spbau.spring2016.torrent.TrackerServer;
 import net.yeputons.spbau.spring2016.torrent.protocol.FileEntry;
@@ -8,8 +9,6 @@ import net.yeputons.spbau.spring2016.torrent.protocol.ListRequest;
 import net.yeputons.spbau.spring2016.torrent.protocol.UploadRequest;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,28 +22,11 @@ public class ConsoleClient implements Runnable {
     private final Path storage = Paths.get("torrent-client-state.bin");
     private final Deque<String> args;
 
+    private final StateFileHolder<ClientState> stateHolder;
+
     public ConsoleClient(String[] args) {
         this.args = new LinkedList<>(Arrays.asList(args));
-    }
-
-    private ClientState readState() {
-        if (!Files.isReadable(storage)) {
-            return new ClientState(Paths.get("."));
-        }
-        try (ObjectInputStream in = new ObjectInputStream(Files.newInputStream(storage))) {
-            return (ClientState) in.readObject();
-        } catch (ClassNotFoundException | IOException e) {
-            e.printStackTrace();
-            return new ClientState(Paths.get("."));
-        }
-    }
-
-    private void writeState(ClientState state) {
-        try (ObjectOutputStream out = new ObjectOutputStream(Files.newOutputStream(storage))) {
-            out.writeObject(state);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        stateHolder = new StateFileHolder<>(storage, new ClientState(Paths.get(".")));
     }
 
     private void help() {
@@ -104,11 +86,11 @@ public class ConsoleClient implements Runnable {
         int id = connection.makeRequest(new UploadRequest(fileName, size));
         System.out.printf("id=%d\n", id);
 
-        ClientState state = readState();
+        ClientState state = stateHolder.getState();
         FileDescription description = new FileDescription(new FileEntry(id, fileName, size), PART_SIZE);
         description.getDownloaded().flip(0, description.getPartsCount());
         state.getFiles().put(id, description);
-        writeState(state);
+        stateHolder.save();
     }
 
     private void doGet(TorrentConnection connection) throws IOException {
@@ -116,7 +98,7 @@ public class ConsoleClient implements Runnable {
             help();
         }
         int id = Integer.parseInt(args.removeFirst());
-        ClientState state = readState();
+        ClientState state = stateHolder.getState();
         if (state.getFiles().containsKey(id)) {
             System.out.printf("File is already in the list: %s\n", state.getFiles().get(id));
             return;
@@ -126,7 +108,7 @@ public class ConsoleClient implements Runnable {
             if (e.getId() == id) {
                 FileDescription description = new FileDescription(e, PART_SIZE);
                 state.getFiles().put(id, description);
-                writeState(state);
+                stateHolder.save();
                 return;
             }
         }
@@ -138,6 +120,6 @@ public class ConsoleClient implements Runnable {
         if (args.size() != 0) {
             help();
         }
-        new TorrentClient(connection, readState()).run();
+        new TorrentClient(connection, stateHolder).run();
     }
 }
