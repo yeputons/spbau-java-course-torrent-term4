@@ -63,7 +63,7 @@ public class TrackerServer {
                     new Thread(() -> {
                         try (DataInputStream in = new DataInputStream(client.getInputStream());
                              DataOutputStream out = new DataOutputStream(client.getOutputStream())) {
-                            for (; ; ) {
+                            for (;;) {
                                 ServerRequest.readRequest(in).visit(new ServerRequestVisitor() {
                                     @Override
                                     public void accept(ListRequest r) throws IOException {
