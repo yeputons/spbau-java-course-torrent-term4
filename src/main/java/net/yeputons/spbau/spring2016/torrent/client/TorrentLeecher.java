@@ -18,6 +18,7 @@ public class TorrentLeecher {
     private final TorrentConnection tracker;
     private final ClientState state;
     private final FileDescription fileDescription;
+    private Thread thread;
 
     public TorrentLeecher(TorrentConnection tracker, ClientState state, FileDescription fileDescription) {
         this.tracker = tracker;
@@ -26,13 +27,18 @@ public class TorrentLeecher {
     }
 
     public void start() {
-        new Thread(() -> {
+        thread = new Thread(() -> {
             try {
                 downloadFile();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }).start();
+        });
+        thread.start();
+    }
+
+    public void join() throws InterruptedException {
+        thread.join();
     }
 
     private void downloadFile() throws IOException {
