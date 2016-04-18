@@ -17,7 +17,7 @@ import java.util.Collections;
 import java.util.stream.Collectors;
 
 public class TorrentSeeder {
-    private static final int DEFAULT_UPDATE_INTERVEL = 1000;
+    private static final int DEFAULT_UPDATE_INTERVEL = 10 * 1000;
 
     private final TorrentConnection tracker;
     private final ClientState state;
