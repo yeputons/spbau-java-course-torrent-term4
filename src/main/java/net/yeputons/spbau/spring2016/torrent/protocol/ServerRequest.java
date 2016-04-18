@@ -9,7 +9,10 @@ import java.util.Map;
 public abstract class ServerRequest<T> extends Request<T> {
     private static final Map<Integer, Method> REQUEST_TYPES = new HashMap<>();
 
-    static {
+    private static void initRequestTypes() {
+        if (!REQUEST_TYPES.isEmpty()) {
+            return;
+        }
         registerRequestType(REQUEST_TYPES, ListRequest.class);
         registerRequestType(REQUEST_TYPES, UploadRequest.class);
         registerRequestType(REQUEST_TYPES, SourcesRequest.class);
@@ -19,6 +22,7 @@ public abstract class ServerRequest<T> extends Request<T> {
     public abstract void visit(ServerRequestVisitor visitor) throws IOException;
 
     public static ServerRequest<?> readRequest(DataInputStream in) throws IOException {
+        initRequestTypes();
         return (ServerRequest<?>) readRequest(REQUEST_TYPES, in);
     }
 }
