@@ -16,6 +16,7 @@ import java.util.BitSet;
 import java.util.List;
 
 public class TorrentLeecher {
+    private static final int RETRY_DELAY = 1000;
     private final TorrentConnection tracker;
     private final StateHolder<ClientState> stateHolder;
     private final FileDescription fileDescription;
@@ -75,9 +76,7 @@ public class TorrentLeecher {
                 }
             }
             try {
-                // CHECKSTYLE.OFF: MagicNumber
-                Thread.sleep(1000);
-                // CHECKSTYLE.ON: MagicNumber
+                Thread.sleep(RETRY_DELAY);
             } catch (InterruptedException e) {
                 break;
             }
