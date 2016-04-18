@@ -18,7 +18,7 @@ import java.util.Deque;
 import java.util.LinkedList;
 
 public class ConsoleClient implements Runnable {
-    private static final int PART_SIZE = 40;
+    private final int partSize;
     private final Path storage = Paths.get("torrent-client-state.bin");
     private final Deque<String> args;
 
@@ -27,6 +27,8 @@ public class ConsoleClient implements Runnable {
     public ConsoleClient(String[] args) {
         this.args = new LinkedList<>(Arrays.asList(args));
         stateHolder = new StateFileHolder<>(storage, new ClientState(Paths.get(".")));
+        partSize = Integer.parseInt(System.getProperty("torrent.part_size", "10485760"));
+        System.out.printf("torrent.part_size=%d\n", partSize);
     }
 
     @Override
@@ -62,6 +64,9 @@ public class ConsoleClient implements Runnable {
         System.err.println("Expected arguments: client (list|get|newfile|run) <tracker-address> [extra]");
         System.err.println("Extra arguments for 'get': <file-id>");
         System.err.println("Extra arguments for 'newfile': <file-path>");
+        System.err.println(
+                "Default file part size is 10485760 bytes, "
+                + "can be modified with JVM property torrent.part_size");
         System.exit(1);
     }
 
@@ -87,7 +92,7 @@ public class ConsoleClient implements Runnable {
         System.out.printf("id=%d\n", id);
 
         ClientState state = stateHolder.getState();
-        FileDescription description = new FileDescription(new FileEntry(id, fileName, size), PART_SIZE);
+        FileDescription description = new FileDescription(new FileEntry(id, fileName, size), partSize);
         description.getDownloaded().flip(0, description.getPartsCount());
         state.getFiles().put(id, description);
         stateHolder.save();
@@ -106,7 +111,7 @@ public class ConsoleClient implements Runnable {
 
         for (FileEntry e : connection.makeRequest(new ListRequest())) {
             if (e.getId() == id) {
-                FileDescription description = new FileDescription(e, PART_SIZE);
+                FileDescription description = new FileDescription(e, partSize);
                 state.getFiles().put(id, description);
                 stateHolder.save();
                 return;
