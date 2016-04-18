@@ -120,6 +120,12 @@ public class ConsoleClient implements Runnable {
         if (args.size() != 0) {
             help();
         }
-        new TorrentClient(connection, stateHolder).run();
+        TorrentClient client = new TorrentClient(connection, stateHolder);
+        client.start();
+        try {
+            client.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }
