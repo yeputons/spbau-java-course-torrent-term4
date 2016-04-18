@@ -48,10 +48,6 @@ public abstract class Request<T> {
         }
     }
 
-    public final int getRequestId() {
-        return getRequestId(getClass());
-    }
-
     public abstract T makeRequest(DataInputStream in, DataOutputStream out) throws IOException;
     //public static abstract Request<T> readFrom(DataInputStream in) throws IOException;
     public abstract void answerTo(DataOutputStream out, T data) throws IOException;

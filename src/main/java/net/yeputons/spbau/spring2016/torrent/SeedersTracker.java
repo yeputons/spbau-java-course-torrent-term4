@@ -7,11 +7,11 @@ public class SeedersTracker {
     private final int seederTimeoutMsecs;
 
     private final Map<Integer, Map<InetSocketAddress, Long>> seeders = new HashMap<>();
+    // seeders[fileId][seederAddress] -> lastUpdated
 
     public SeedersTracker(int seederTimeoutMsecs) {
         this.seederTimeoutMsecs = seederTimeoutMsecs;
     }
-    // seeders[fileId][seederAddress] -> lastUpdated
 
     public synchronized List<InetSocketAddress> getSources(int fileId) {
         Map<InetSocketAddress, Long> fileSeeders = seeders.get(fileId);

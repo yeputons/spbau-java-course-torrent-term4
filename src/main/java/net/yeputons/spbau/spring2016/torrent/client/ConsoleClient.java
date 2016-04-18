@@ -29,13 +29,6 @@ public class ConsoleClient implements Runnable {
         stateHolder = new StateFileHolder<>(storage, new ClientState(Paths.get(".")));
     }
 
-    private void help() {
-        System.err.println("Expected arguments: client (list|get|newfile|run) <tracker-address> [extra]");
-        System.err.println("Extra arguments for 'get': <file-id>");
-        System.err.println("Extra arguments for 'newfile': <file-path>");
-        System.exit(1);
-    }
-
     @Override
     public void run() {
         if (args.size() < 2) {
@@ -63,6 +56,13 @@ public class ConsoleClient implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void help() {
+        System.err.println("Expected arguments: client (list|get|newfile|run) <tracker-address> [extra]");
+        System.err.println("Extra arguments for 'get': <file-id>");
+        System.err.println("Extra arguments for 'newfile': <file-path>");
+        System.exit(1);
     }
 
     private void doList(TorrentConnection connection) throws IOException {
