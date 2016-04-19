@@ -17,7 +17,7 @@ public class StateFileHolder<T extends Serializable> implements StateHolder<T> {
     public StateFileHolder(Path storage, T defaultValue) {
         T state = defaultValue;
         this.storage = storage;
-        LOG.debug("Loading state of type {} from {}", defaultValue.getClass().getCanonicalName(), storage);
+        LOG.debug("Loading state of type {} from {}", defaultValue.getClass().getName(), storage);
         try (InputStream fin = Files.newInputStream(storage);
              ObjectInputStream in = new ObjectInputStream(fin)) {
             state = (T) in.readObject();
@@ -37,6 +37,7 @@ public class StateFileHolder<T extends Serializable> implements StateHolder<T> {
     @Override
     public void save() throws IOException {
         synchronized (state) {
+            LOG.debug("Saving {} to {}", state.getClass().getName(), storage);
             try (OutputStream fout = Files.newOutputStream(storage);
                  ObjectOutputStream out = new ObjectOutputStream(fout)) {
                 out.writeObject(state);
