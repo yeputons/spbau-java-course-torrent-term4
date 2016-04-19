@@ -1,6 +1,5 @@
 package net.yeputons.spbau.spring2016.torrent.protocol;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -25,7 +24,7 @@ public abstract class Request<T> {
             throws IOException {
         int id = in.read();
         if (id == -1) {
-            throw new EOFException();
+            throw new NoRequestException();
         }
         Method readFromMethod = requestTypes.get(id);
         if (readFromMethod == null) {
