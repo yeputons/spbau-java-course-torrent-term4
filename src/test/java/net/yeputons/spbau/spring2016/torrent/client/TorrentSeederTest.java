@@ -57,15 +57,15 @@ public class TorrentSeederTest {
         // CHECKSTYLE.OFF: MagicNumber
         TorrentSeeder seeder = new TorrentSeeder(tracker, state, 100);
         // CHECKSTYLE.ON: MagicNumber
-        seeder.start();
 
         Semaphore waitingForRequest = new Semaphore(1);
         waitingForRequest.acquire();
-
         when(tracker.makeRequest(new UpdateRequest(anyInt(), Arrays.asList(1)))).thenAnswer((r) -> {
             waitingForRequest.release();
             return true;
         });
+
+        seeder.start();
         waitingForRequest.acquire();
         waitingForRequest.acquire();
 
