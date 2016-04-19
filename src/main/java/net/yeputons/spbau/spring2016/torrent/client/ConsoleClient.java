@@ -39,6 +39,16 @@ public class ConsoleClient implements Runnable {
         if (args.size() < 2) {
             help();
         }
+        Path downloadsDir = stateHolder.getState().getDownloadsDir();
+        if (!Files.isDirectory(downloadsDir)) {
+            try {
+                Files.createDirectories(downloadsDir);
+            } catch (IOException e) {
+                LOG.error("Unable to create downloads directory (" + downloadsDir + ")", e);
+                return;
+            }
+        }
+
         String operation = args.removeFirst();
         InetSocketAddress addr = new InetSocketAddress(args.removeFirst(), TrackerServer.DEFAULT_PORT);
         try (TorrentConnection connection = TorrentConnection.connect(addr)) {

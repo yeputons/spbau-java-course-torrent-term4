@@ -22,6 +22,10 @@ public class ClientState implements Serializable {
         this.downloadsDir = downloadsDir.toAbsolutePath().toString();
     }
 
+    public Path getDownloadsDir() {
+        return Paths.get(downloadsDir);
+    }
+
     Map<Integer, FileDescription> getFiles() {
         return files;
     }
