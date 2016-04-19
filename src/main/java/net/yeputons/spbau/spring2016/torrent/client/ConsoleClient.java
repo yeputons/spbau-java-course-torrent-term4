@@ -7,6 +7,8 @@ import net.yeputons.spbau.spring2016.torrent.TrackerServer;
 import net.yeputons.spbau.spring2016.torrent.protocol.FileEntry;
 import net.yeputons.spbau.spring2016.torrent.protocol.ListRequest;
 import net.yeputons.spbau.spring2016.torrent.protocol.UploadRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -18,6 +20,7 @@ import java.util.Deque;
 import java.util.LinkedList;
 
 public class ConsoleClient implements Runnable {
+    private static final Logger LOG = LoggerFactory.getLogger(ConsoleClient.class);
     private final int partSize;
     private final Path storage = Paths.get("torrent-client-state.bin");
     private final Deque<String> args;
@@ -28,7 +31,7 @@ public class ConsoleClient implements Runnable {
         this.args = new LinkedList<>(Arrays.asList(args));
         stateHolder = new StateFileHolder<>(storage, new ClientState(Paths.get("./downloads")));
         partSize = Integer.parseInt(System.getProperty("torrent.part_size", "10485760"));
-        System.out.printf("torrent.part_size=%d\n", partSize);
+        LOG.info("Will use part size of {} bytes for new uploads and downloads", partSize);
     }
 
     @Override
@@ -87,9 +90,9 @@ public class ConsoleClient implements Runnable {
         Path p = Paths.get(args.removeFirst());
         String fileName = p.getFileName().toString();
         long size = Files.size(p);
-        System.out.printf("Adding file %s (%d bytes)... ", fileName, size);
+        LOG.info("Adding file {} ({} bytes) to server", fileName, size);
         int id = connection.makeRequest(new UploadRequest(fileName, size));
-        System.out.printf("id=%d\n", id);
+        LOG.info("Server confirmed upload, file id is {}", id);
 
         ClientState state = stateHolder.getState();
         FileDescription description = new FileDescription(new FileEntry(id, fileName, size), partSize);
@@ -105,7 +108,7 @@ public class ConsoleClient implements Runnable {
         int id = Integer.parseInt(args.removeFirst());
         ClientState state = stateHolder.getState();
         if (state.getFiles().containsKey(id)) {
-            System.out.printf("File is already in the list: %s\n", state.getFiles().get(id));
+            LOG.warn("File is already in the list: {}", state.getFileDescription(id));
             return;
         }
 
@@ -117,7 +120,7 @@ public class ConsoleClient implements Runnable {
                 return;
             }
         }
-        System.err.println("File with id " + id + " was not found on the server");
+        LOG.error("File with id {} was not found on the server", id);
         System.exit(1);
     }
 
