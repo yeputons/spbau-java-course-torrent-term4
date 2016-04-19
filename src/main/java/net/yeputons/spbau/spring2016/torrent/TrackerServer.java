@@ -59,6 +59,7 @@ public class TrackerServer {
             server = new ServerSocket();
             server.bind(new InetSocketAddress("0.0.0.0", port));
         }
+        LOG.info("Started server on {}", server.getLocalSocketAddress());
         thread = new Thread(() -> {
             while (!Thread.interrupted()) {
                 final Socket client;
@@ -67,6 +68,7 @@ public class TrackerServer {
                 } catch (IOException ignored) {
                     break;
                 }
+                LOG.info("New client from {}", client.getRemoteSocketAddress());
                 new Thread(() -> {
                     try (SocketDataStreamsWrapper wrapper = new SocketDataStreamsWrapper(client)) {
                         final DataInputStream in = wrapper.getInputStream();
@@ -78,11 +80,13 @@ public class TrackerServer {
                             } catch (NoRequestException ignored) {
                                 break;
                             }
+                            LOG.debug("Incoming request: {}", request);
                             request.visit(new ServerRequestVisitor() {
                                 @Override
                                 public void accept(ListRequest r) throws IOException {
                                     State s = stateHolder.getState();
                                     synchronized (s) {
+                                        LOG.debug("Answering with {}", s.files);
                                         r.answerTo(out, s.files);
                                     }
                                 }
@@ -97,12 +101,15 @@ public class TrackerServer {
                                         s.files.add(new FileEntry(id, r.getFileName(), r.getSize()));
                                         stateHolder.save();
                                     }
+                                    LOG.debug("Answering with {}", id);
                                     r.answerTo(out, id);
                                 }
 
                                 @Override
                                 public void accept(SourcesRequest r) throws IOException {
-                                    r.answerTo(out, seeders.getSources(r.getFileId()));
+                                    List<InetSocketAddress> answer = seeders.getSources(r.getFileId());
+                                    LOG.debug("Answering with {}", answer);
+                                    r.answerTo(out, answer);
                                 }
 
                                 @Override
@@ -112,6 +119,7 @@ public class TrackerServer {
                                     for (int fileId : r.getSeedingFiles()) {
                                         seeders.updateSource(fileId, address);
                                     }
+                                    LOG.debug("Answering with {}", true);
                                     r.answerTo(out, true);
                                 }
                             });
@@ -119,13 +127,16 @@ public class TrackerServer {
                     } catch (IOException e) {
                         LOG.warn("Error while processing client request", e);
                     }
+                    LOG.info("Client disconnected");
                 }).start();
             }
+            LOG.info("Server on {} is terminated", server.getLocalSocketAddress());
         });
         thread.start();
     }
 
     public void shutdown() throws IOException {
+        LOG.info("Shutting down server on {}", server.getLocalSocketAddress());
         synchronized (this) {
             if (server != null) {
                 server.close();
