@@ -117,6 +117,7 @@ public class ConsoleClient implements Runnable {
                 FileDescription description = new FileDescription(e, partSize);
                 state.getFiles().put(id, description);
                 stateHolder.save();
+                LOG.info("Will download file {} (id is {})", e.getName(), e.getId());
                 return;
             }
         }

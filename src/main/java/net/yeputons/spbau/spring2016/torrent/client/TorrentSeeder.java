@@ -46,8 +46,10 @@ public class TorrentSeeder {
         }
         listener = new ServerSocket();
         listener.bind(new InetSocketAddress("0.0.0.0", 0));
+        LOG.info("Started seeder on {}", listener.getLocalSocketAddress());
 
         updatingThread = new Thread(() -> {
+            LOG.debug("Started updating thread");
             while (!listener.isClosed()) {
                 try {
                     updateTracker(listener.getLocalPort());
@@ -60,6 +62,7 @@ public class TorrentSeeder {
                     break;
                 }
             }
+            LOG.debug("Updating thread is terminated");
         });
         updatingThread.start();
 
@@ -71,12 +74,14 @@ public class TorrentSeeder {
                 } catch (IOException ignored) {
                     break;
                 }
+                LOG.info("New client from {}", peer.getRemoteSocketAddress());
                 new Thread(() -> {
                     try (SocketDataStreamsWrapper wrapper = new SocketDataStreamsWrapper(peer)) {
                         processPeer(peer, wrapper.getInputStream(), wrapper.getOutputStream());
                     } catch (IOException e) {
                         LOG.warn("Error while processing connection from peer", e);
                     }
+                    LOG.info("Client disconnected");
                 }).start();
             }
         });
@@ -98,8 +103,11 @@ public class TorrentSeeder {
     }
 
     private void updateTracker(int seedingPort) throws IOException {
-        tracker.makeRequest(new UpdateRequest(
-                seedingPort, state.getFiles().keySet().stream().collect(Collectors.toList())));
+        UpdateRequest request = new UpdateRequest(
+                seedingPort, state.getFiles().keySet().stream().collect(Collectors.toList()));
+        LOG.debug("Making {}", request);
+        boolean result = tracker.makeRequest(request);
+        LOG.debug("Updated tracker, result={}", result);
     }
 
     private void processPeer(final Socket peer, DataInputStream in, final DataOutputStream out)
@@ -111,16 +119,22 @@ public class TorrentSeeder {
             } catch (NoRequestException ignored) {
                 break;
             }
+            LOG.debug("Incoming request: {}", request);
             request.visit(new ClientRequestVisitor() {
                 @Override
                 public void accept(StatRequest r) throws IOException {
                     FileDescription description = state.getFileDescription(r.getFileId());
                     if (description != null) {
                         synchronized (state) {
+                            LOG.debug("Answering: {}/{} parts are downloaded",
+                                    description.getDownloaded().cardinality(),
+                                    description.getPartsCount()
+                                    );
                             r.answerTo(out,
                                     description.getDownloaded().stream().boxed().collect(Collectors.toList()));
                         }
                     } else {
+                        LOG.warn("Unknown file, answering with empty list");
                         r.answerTo(out, Collections.emptyList());
                     }
                 }
@@ -132,6 +146,11 @@ public class TorrentSeeder {
                     FileDescription description = state.getFileDescription(fileId);
                     synchronized (state) {
                         if (description == null || !description.getDownloaded().get(r.getPartId())) {
+                            if (description == null) {
+                                LOG.warn("Unknown file, disconnecting");
+                            } else {
+                                LOG.warn("Part is not downloaded, disconnecting");
+                            }
                             peer.close();
                             return;
                         }
@@ -142,6 +161,7 @@ public class TorrentSeeder {
                         file.seek(description.getPartStart(partId));
                         file.readFully(data);
                     }
+                    LOG.debug("Answering with {} bytes", data.length);
                     r.answerTo(out, ByteBuffer.wrap(data));
                 }
             });

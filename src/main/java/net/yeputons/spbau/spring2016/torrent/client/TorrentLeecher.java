@@ -44,6 +44,8 @@ public class TorrentLeecher {
 
     private void downloadFile() {
         FileEntry entry = fileDescription.getEntry();
+        LOG.info("Started downloading {}", entry);
+
         int fileId = entry.getId();
         BitSet downloaded = null;
         synchronized (stateHolder.getState()) {
@@ -52,6 +54,7 @@ public class TorrentLeecher {
         int partsCount = fileDescription.getPartsCount();
 
         while (downloaded.cardinality() < partsCount) {
+            LOG.debug("Downloaded: {}/{}", downloaded.cardinality(), partsCount);
             List<InetSocketAddress> sources = null;
             try {
                 sources = tracker.makeRequest(new SourcesRequest(fileId));
@@ -59,13 +62,16 @@ public class TorrentLeecher {
                 LOG.error("Unable to request sources from tracker", e);
                 return;
             }
+            LOG.debug("Sources: {}", sources);
             for (InetSocketAddress source : sources) {
                 try (TorrentConnection peer = TorrentConnection.connect(source)) {
                     List<Integer> partsAvailable = peer.makeRequest(new StatRequest(fileId));
+                    LOG.debug("Peer {} has {} parts available", source, partsAvailable.size());
                     for (int partId : partsAvailable) {
                         if (downloaded.get(partId)) {
                             continue;
                         }
+                        LOG.debug("Retrieving part {} from {}", partId, source);
                         ByteBuffer data = peer.makeRequest(
                                 new GetRequest(fileId, partId, fileDescription.getPartSize(partId)));
                         ClientState state = stateHolder.getState();
@@ -94,11 +100,13 @@ public class TorrentLeecher {
                     LOG.warn("Error while communicating with peer", e);
                 }
             }
+            LOG.debug("Sleeping until next iteration");
             try {
                 Thread.sleep(RETRY_DELAY);
             } catch (InterruptedException ignored) {
                 break;
             }
         }
+        LOG.info("Downloading of {} is finished", entry);
     }
 }
