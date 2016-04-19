@@ -18,7 +18,8 @@ public class StateFileHolder<T extends Serializable> implements StateHolder<T> {
         T state = defaultValue;
         this.storage = storage;
         LOG.debug("Loading state of type {} from {}", defaultValue.getClass().getCanonicalName(), storage);
-        try (ObjectInputStream in = new ObjectInputStream(Files.newInputStream(storage))) {
+        try (InputStream fin = Files.newInputStream(storage);
+             ObjectInputStream in = new ObjectInputStream(fin)) {
             state = (T) in.readObject();
         } catch (NoSuchFileException | FileNotFoundException ignored) {
             LOG.debug("File not found, backing to default");
@@ -36,7 +37,8 @@ public class StateFileHolder<T extends Serializable> implements StateHolder<T> {
     @Override
     public void save() throws IOException {
         synchronized (state) {
-            try (ObjectOutputStream out = new ObjectOutputStream(Files.newOutputStream(storage))) {
+            try (OutputStream fout = Files.newOutputStream(storage);
+                 ObjectOutputStream out = new ObjectOutputStream(fout)) {
                 out.writeObject(state);
             }
         }
