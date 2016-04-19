@@ -45,7 +45,10 @@ public class TorrentLeecher {
     private void downloadFile() {
         FileEntry entry = fileDescription.getEntry();
         int fileId = entry.getId();
-        BitSet downloaded = fileDescription.getDownloaded();
+        BitSet downloaded = null;
+        synchronized (stateHolder.getState()) {
+            downloaded = (BitSet) fileDescription.getDownloaded().clone();
+        }
         int partsCount = fileDescription.getPartsCount();
 
         while (downloaded.cardinality() < partsCount) {
@@ -60,28 +63,31 @@ public class TorrentLeecher {
                 try (TorrentConnection peer = TorrentConnection.connect(source)) {
                     List<Integer> partsAvailable = peer.makeRequest(new StatRequest(fileId));
                     for (int partId : partsAvailable) {
-                        if (!downloaded.get(partId)) {
-                            ByteBuffer data = peer.makeRequest(
-                                    new GetRequest(fileId, partId, fileDescription.getPartSize(partId)));
-                            ClientState state = stateHolder.getState();
-                            try {
-                                RandomAccessFile file = state.getFile(fileId);
-                                synchronized (file) {
-                                    file.seek(fileDescription.getPartStart(partId));
-                                    file.write(data.array());
-                                }
-                                synchronized (state) {
-                                    downloaded.flip(partId);
-                                    try {
-                                        stateHolder.save();
-                                    } catch (IOException e) {
-                                        downloaded.flip(partId);
-                                    }
-                                }
-                            } catch (IOException e) {
-                                LOG.error("Error while saving file", e);
-                                return;
+                        if (downloaded.get(partId)) {
+                            continue;
+                        }
+                        ByteBuffer data = peer.makeRequest(
+                                new GetRequest(fileId, partId, fileDescription.getPartSize(partId)));
+                        ClientState state = stateHolder.getState();
+                        try {
+                            RandomAccessFile file = state.getFile(fileId);
+                            synchronized (file) {
+                                file.seek(fileDescription.getPartStart(partId));
+                                file.write(data.array());
                             }
+                            synchronized (state) {
+                                downloaded.flip(partId);
+                                fileDescription.getDownloaded().flip(partId);
+                                try {
+                                    stateHolder.save();
+                                } catch (IOException e) {
+                                    downloaded.flip(partId);
+                                    fileDescription.getDownloaded().flip(partId);
+                                }
+                            }
+                        } catch (IOException e) {
+                            LOG.error("Error while saving file", e);
+                            return;
                         }
                     }
                 } catch (IOException e) {

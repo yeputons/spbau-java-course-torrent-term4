@@ -114,14 +114,14 @@ public class TorrentSeeder {
             request.visit(new ClientRequestVisitor() {
                 @Override
                 public void accept(StatRequest r) throws IOException {
-                    synchronized (state) {
-                        FileDescription description = state.getFileDescription(r.getFileId());
-                        if (description != null) {
+                    FileDescription description = state.getFileDescription(r.getFileId());
+                    if (description != null) {
+                        synchronized (state) {
                             r.answerTo(out,
                                     description.getDownloaded().stream().boxed().collect(Collectors.toList()));
-                        } else {
-                            r.answerTo(out, Collections.emptyList());
                         }
+                    } else {
+                        r.answerTo(out, Collections.emptyList());
                     }
                 }
 
@@ -129,9 +129,8 @@ public class TorrentSeeder {
                 public void accept(GetRequest r) throws IOException {
                     int fileId = r.getFileId();
                     int partId = r.getPartId();
-                    FileDescription description;
+                    FileDescription description = state.getFileDescription(fileId);
                     synchronized (state) {
-                        description = state.getFileDescription(fileId);
                         if (description == null || !description.getDownloaded().get(r.getPartId())) {
                             peer.close();
                             return;
