@@ -49,10 +49,10 @@ public class TrackerServer {
     }
 
     public void start() throws IOException {
-        if (thread != null || server != null) {
-            throw new IllegalStateException("Already started");
-        }
         synchronized (this) {
+            if (thread != null || server != null) {
+                throw new IllegalStateException("Already started");
+            }
             if (shuttedDown) {
                 return;
             }
