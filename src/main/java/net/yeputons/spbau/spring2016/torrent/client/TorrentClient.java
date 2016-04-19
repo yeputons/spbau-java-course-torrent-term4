@@ -42,7 +42,7 @@ public class TorrentClient {
         try {
             seeder.start();
         } catch (IOException e) {
-            e.printStackTrace();
+            LOG.error("Cannot start seeder", e);
         }
     }
 

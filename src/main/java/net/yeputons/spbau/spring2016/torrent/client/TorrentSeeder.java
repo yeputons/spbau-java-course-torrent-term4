@@ -4,6 +4,8 @@ import net.yeputons.spbau.spring2016.torrent.FileDescription;
 import net.yeputons.spbau.spring2016.torrent.SocketDataStreamsWrapper;
 import net.yeputons.spbau.spring2016.torrent.TorrentConnection;
 import net.yeputons.spbau.spring2016.torrent.protocol.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -19,6 +21,7 @@ import java.util.stream.Collectors;
 
 public class TorrentSeeder {
     private static final int DEFAULT_UPDATE_INTERVEL = 10 * 1000;
+    private static final Logger LOG = LoggerFactory.getLogger(TorrentSeeder.class);
 
     private final TorrentConnection tracker;
     private final ClientState state;
@@ -49,13 +52,12 @@ public class TorrentSeeder {
                 try {
                     updateTracker(listener.getLocalPort());
                 } catch (IOException e) {
-                    e.printStackTrace();
-                    break;
+                    LOG.warn("Error while making update to tracker", e);
                 }
                 try {
                     Thread.sleep(updateInterval);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    break;
                 }
             }
         });
@@ -66,15 +68,14 @@ public class TorrentSeeder {
                 final Socket peer;
                 try {
                     peer = listener.accept();
-                } catch (IOException e) {
-                    e.printStackTrace();
+                } catch (IOException ignored) {
                     break;
                 }
                 new Thread(() -> {
                     try (SocketDataStreamsWrapper wrapper = new SocketDataStreamsWrapper(peer)) {
                         processPeer(peer, wrapper.getInputStream(), wrapper.getOutputStream());
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        LOG.warn("Error while processing connection from peer", e);
                     }
                 }).start();
             }
@@ -86,13 +87,9 @@ public class TorrentSeeder {
         return listener.getLocalSocketAddress();
     }
 
-    public void shutdown() {
-        try {
-            listener.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void shutdown() throws IOException {
         updatingThread.interrupt();
+        listener.close();
     }
 
     public void join() throws InterruptedException {
@@ -108,7 +105,13 @@ public class TorrentSeeder {
     private void processPeer(final Socket peer, DataInputStream in, final DataOutputStream out)
             throws IOException {
         while (true) {
-            ClientRequest.readRequest(in).visit(new ClientRequestVisitor() {
+            ClientRequest<?> request;
+            try {
+                request = ClientRequest.readRequest(in);
+            } catch (NoRequestException ignored) {
+                break;
+            }
+            request.visit(new ClientRequestVisitor() {
                 @Override
                 public void accept(StatRequest r) throws IOException {
                     synchronized (state) {

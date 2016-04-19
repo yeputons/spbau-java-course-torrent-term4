@@ -2,7 +2,6 @@ package net.yeputons.spbau.spring2016.torrent.client;
 
 import net.yeputons.spbau.spring2016.torrent.FileDescription;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.Serializable;
@@ -32,7 +31,7 @@ public class ClientState implements Serializable {
         }
     }
 
-    public RandomAccessFile getFile(int id) {
+    public RandomAccessFile getFile(int id) throws IOException {
         synchronized (files) {
             FileDescription description = getFileDescription(id);
             if (description == null) {
@@ -43,20 +42,12 @@ public class ClientState implements Serializable {
             }
             RandomAccessFile result = filesOpened.get(id);
             if (result == null) {
-                try {
-                    result = new RandomAccessFile(
-                            Paths.get(downloadsDir, description.getEntry().getName()).toFile(),
-                            "rw");
-                } catch (FileNotFoundException e) {
-                    throw new RuntimeException("Requested to open unknown file with id " + id, e);
-                }
+                result = new RandomAccessFile(
+                        Paths.get(downloadsDir, description.getEntry().getName()).toFile(),
+                        "rw");
                 filesOpened.put(id, result);
             }
-            try {
-                result.setLength(description.getEntry().getSize());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            result.setLength(description.getEntry().getSize());
             return result;
         }
     }

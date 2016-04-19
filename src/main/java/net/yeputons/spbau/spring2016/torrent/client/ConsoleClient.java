@@ -59,7 +59,7 @@ public class ConsoleClient implements Runnable {
                     help();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOG.error("I/O error during operation", e);
         }
     }
 
@@ -132,8 +132,7 @@ public class ConsoleClient implements Runnable {
         client.start();
         try {
             client.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        } catch (InterruptedException ignored) {
         }
     }
 }

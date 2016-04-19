@@ -3,6 +3,8 @@ package net.yeputons.spbau.spring2016.torrent.client;
 import net.yeputons.spbau.spring2016.torrent.SocketDataStreamsWrapper;
 import net.yeputons.spbau.spring2016.torrent.protocol.GetRequest;
 import net.yeputons.spbau.spring2016.torrent.protocol.StatRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -16,6 +18,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.Assert.assertArrayEquals;
 
 public class SimpleSeeder {
+    private static final Logger LOG = LoggerFactory.getLogger(SimpleSeeder.class);
     private final List<byte[]> requests = new ArrayList<>();
     private final List<byte[]> answers = new ArrayList<>();
     private ServerSocket listener;
@@ -58,38 +61,31 @@ public class SimpleSeeder {
         listener.bind(new InetSocketAddress("0.0.0.0", 0));
         exceptionCaught = new AtomicReference<>();
         thread = new Thread(() -> {
-            try {
-                while (true) {
-                    Socket peer;
-                    try {
-                        peer = listener.accept();
-                    } catch (IOException ignored) {
-                        break;
-                    }
-                    try (SocketDataStreamsWrapper wrapper = new SocketDataStreamsWrapper(peer)) {
-                        for (int i = 0; i < requests.size(); i++) {
-                            byte[] data = new byte[requests.get(i).length];
-                            wrapper.getInputStream().readFully(data);
-                            assertArrayEquals(requests.get(i), data);
-                            wrapper.getOutputStream().write(answers.get(i));
-                        }
-                    }
+            while (true) {
+                Socket peer;
+                try {
+                    peer = listener.accept();
+                } catch (IOException ignored) {
+                    break;
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-                exceptionCaught.set(e);
+                try (SocketDataStreamsWrapper wrapper = new SocketDataStreamsWrapper(peer)) {
+                    for (int i = 0; i < requests.size(); i++) {
+                        byte[] data = new byte[requests.get(i).length];
+                        wrapper.getInputStream().readFully(data);
+                        assertArrayEquals(requests.get(i), data);
+                        wrapper.getOutputStream().write(answers.get(i));
+                    }
+                } catch (IOException e) {
+                    LOG.warn("Exception while processing client", e);
+                }
             }
         });
         thread.start();
         return listener.getLocalSocketAddress();
     }
 
-    public void shutdown() {
-        try {
-            listener.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void shutdown() throws IOException {
+        listener.close();
     }
 
     public void join() throws Exception {
