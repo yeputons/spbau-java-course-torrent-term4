@@ -77,7 +77,7 @@ public class TorrentLeecher {
             }
             try {
                 Thread.sleep(RETRY_DELAY);
-            } catch (InterruptedException e) {
+            } catch (InterruptedException ignored) {
                 break;
             }
         }

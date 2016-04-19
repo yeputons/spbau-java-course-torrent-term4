@@ -64,7 +64,7 @@ public class SimpleSeeder {
                     Socket peer;
                     try {
                         peer = listener.accept();
-                    } catch (IOException e) {
+                    } catch (IOException ignored) {
                         break;
                     }
                     try (DataInputStream in = new DataInputStream(peer.getInputStream());
