@@ -1,6 +1,7 @@
 package net.yeputons.spbau.spring2016.torrent.client;
 
 import net.yeputons.spbau.spring2016.torrent.FileDescription;
+import net.yeputons.spbau.spring2016.torrent.SocketDataStreamsWrapper;
 import net.yeputons.spbau.spring2016.torrent.TorrentConnection;
 import net.yeputons.spbau.spring2016.torrent.protocol.*;
 
@@ -70,16 +71,10 @@ public class TorrentSeeder {
                     break;
                 }
                 new Thread(() -> {
-                    try (DataInputStream in = new DataInputStream(peer.getInputStream());
-                         DataOutputStream out = new DataOutputStream(peer.getOutputStream())) {
-                        processPeer(peer, in, out);
+                    try (SocketDataStreamsWrapper wrapper = new SocketDataStreamsWrapper(peer)) {
+                        processPeer(peer, wrapper.getInputStream(), wrapper.getOutputStream());
                     } catch (IOException e) {
                         e.printStackTrace();
-                    } finally {
-                        try {
-                            peer.close();
-                        } catch (IOException ignored) {
-                        }
                     }
                 }).start();
             }

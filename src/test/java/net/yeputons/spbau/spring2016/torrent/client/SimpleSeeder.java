@@ -1,10 +1,9 @@
 package net.yeputons.spbau.spring2016.torrent.client;
 
+import net.yeputons.spbau.spring2016.torrent.SocketDataStreamsWrapper;
 import net.yeputons.spbau.spring2016.torrent.protocol.GetRequest;
 import net.yeputons.spbau.spring2016.torrent.protocol.StatRequest;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -67,13 +66,12 @@ public class SimpleSeeder {
                     } catch (IOException ignored) {
                         break;
                     }
-                    try (DataInputStream in = new DataInputStream(peer.getInputStream());
-                         DataOutputStream out = new DataOutputStream(peer.getOutputStream())) {
+                    try (SocketDataStreamsWrapper wrapper = new SocketDataStreamsWrapper(peer)) {
                         for (int i = 0; i < requests.size(); i++) {
                             byte[] data = new byte[requests.get(i).length];
-                            in.readFully(data);
+                            wrapper.getInputStream().readFully(data);
                             assertArrayEquals(requests.get(i), data);
-                            out.write(answers.get(i));
+                            wrapper.getOutputStream().write(answers.get(i));
                         }
                     }
                 }

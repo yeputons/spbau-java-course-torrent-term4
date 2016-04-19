@@ -54,7 +54,7 @@ public class TorrentLeecher {
         while (downloaded.cardinality() < partsCount) {
             List<InetSocketAddress> sources = tracker.makeRequest(new SourcesRequest(fileId));
             for (InetSocketAddress source : sources) {
-                try (TorrentConnection peer = new TorrentConnection(source)) {
+                try (TorrentConnection peer = TorrentConnection.connect(source)) {
                     List<Integer> partsAvailable = peer.makeRequest(new StatRequest(fileId));
                     for (int partId : partsAvailable) {
                         if (!downloaded.get(partId)) {

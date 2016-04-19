@@ -36,7 +36,8 @@ public class TrackerServerTest {
         TrackerServer server = new TrackerServer(SERVER_PORT, storage);
         server.start();
         try {
-            try (TorrentConnection conn = new TorrentConnection(new InetSocketAddress("127.0.0.1", SERVER_PORT))) {
+            try (TorrentConnection conn = TorrentConnection.connect(
+                    new InetSocketAddress("127.0.0.1", SERVER_PORT))) {
                 assertEquals(Collections.emptyList(), conn.makeRequest(new ListRequest()));
                 for (FileEntry e : expectedFiles) {
                     assertEquals(Integer.valueOf(e.getId()),
@@ -52,7 +53,8 @@ public class TrackerServerTest {
         server = new TrackerServer(SERVER_PORT, storage);
         server.start();
         try {
-            try (TorrentConnection conn = new TorrentConnection(new InetSocketAddress("127.0.0.1", SERVER_PORT))) {
+            try (TorrentConnection conn = TorrentConnection.connect(
+                    new InetSocketAddress("127.0.0.1", SERVER_PORT))) {
                 assertEquals(expectedFiles, conn.makeRequest(new ListRequest()));
             }
         } finally {

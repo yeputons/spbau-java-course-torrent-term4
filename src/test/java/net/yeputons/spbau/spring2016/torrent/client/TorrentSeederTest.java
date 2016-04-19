@@ -87,7 +87,7 @@ public class TorrentSeederTest {
     public void testStat() throws IOException, InterruptedException {
         TorrentSeeder seeder = createSeeder();
 
-        try (TorrentConnection connection = new TorrentConnection(seeder.getAddress())) {
+        try (TorrentConnection connection = TorrentConnection.connect(seeder.getAddress())) {
             assertEquals(Arrays.asList(1), connection.makeRequest(new StatRequest(1)));
             state.getFileDescription(1).getDownloaded().set(2);
             assertEquals(Arrays.asList(1, 2), connection.makeRequest(new StatRequest(1)));
@@ -101,7 +101,7 @@ public class TorrentSeederTest {
     public void testGet() throws IOException, InterruptedException {
         TorrentSeeder seeder = createSeeder();
 
-        try (TorrentConnection connection = new TorrentConnection(seeder.getAddress())) {
+        try (TorrentConnection connection = TorrentConnection.connect(seeder.getAddress())) {
             // CHECKSTYLE.OFF: MagicNumber
             ByteBuffer result1 = connection.makeRequest(new GetRequest(1, 1, file.getPartSize(1)));
             byte[] expected1 = new byte[35];

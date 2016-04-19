@@ -61,8 +61,9 @@ public class TrackerServer {
                 while (!Thread.interrupted()) {
                     final Socket client = server.accept();
                     new Thread(() -> {
-                        try (DataInputStream in = new DataInputStream(client.getInputStream());
-                             DataOutputStream out = new DataOutputStream(client.getOutputStream())) {
+                        try (SocketDataStreamsWrapper wrapper = new SocketDataStreamsWrapper(client)) {
+                            final DataInputStream in = wrapper.getInputStream();
+                            final DataOutputStream out = wrapper.getOutputStream();
                             for (;;) {
                                 ServerRequest.readRequest(in).visit(new ServerRequestVisitor() {
                                     @Override
@@ -104,11 +105,6 @@ public class TrackerServer {
                         } catch (EOFException ignored) {
                         } catch (IOException e) {
                             e.printStackTrace();
-                        } finally {
-                            try {
-                                client.close();
-                            } catch (IOException ignored) {
-                            }
                         }
                     }).start();
                 }

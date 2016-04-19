@@ -41,7 +41,7 @@ public class ConsoleClient implements Runnable {
         }
         String operation = args.removeFirst();
         InetSocketAddress addr = new InetSocketAddress(args.removeFirst(), TrackerServer.DEFAULT_PORT);
-        try (TorrentConnection connection = new TorrentConnection(addr)) {
+        try (TorrentConnection connection = TorrentConnection.connect(addr)) {
             switch (operation) {
                 case "list":
                     doList(connection);
