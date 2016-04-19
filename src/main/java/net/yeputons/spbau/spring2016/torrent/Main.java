@@ -1,12 +1,16 @@
 package net.yeputons.spbau.spring2016.torrent;
 
 import net.yeputons.spbau.spring2016.torrent.client.ConsoleClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Arrays;
 
 public final class Main {
+    private static final Logger LOG = LoggerFactory.getLogger(Main.class);
+
     private Main() {
     }
 
@@ -23,7 +27,7 @@ public final class Main {
             try {
                 server.start();
             } catch (IOException e) {
-                e.printStackTrace();
+                LOG.error("Cannot start server", e);
             }
         } else if (args[0].equals("client")) {
             new ConsoleClient(Arrays.copyOfRange(args, 1, args.length)).run();

@@ -9,6 +9,7 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,6 +26,7 @@ public class TrackerServerTest {
     @Test
     public void testAutoSave() throws IOException, InterruptedException {
         Path storage = folder.newFile().toPath();
+        Files.delete(storage);
 
         // CHECKSTYLE.OFF: MagicNumber
         List<FileEntry> expectedFiles = Arrays.asList(
