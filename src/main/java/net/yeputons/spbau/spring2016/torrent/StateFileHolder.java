@@ -2,6 +2,7 @@ package net.yeputons.spbau.spring2016.torrent;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 
 public class StateFileHolder<T extends Serializable> implements StateHolder<T> {
@@ -14,7 +15,7 @@ public class StateFileHolder<T extends Serializable> implements StateHolder<T> {
         this.storage = storage;
         try (ObjectInputStream in = new ObjectInputStream(Files.newInputStream(storage))) {
             state = (T) in.readObject();
-        } catch (FileNotFoundException ignored) {
+        } catch (NoSuchFileException | FileNotFoundException ignored) {
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
