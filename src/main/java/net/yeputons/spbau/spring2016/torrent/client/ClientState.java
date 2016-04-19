@@ -7,15 +7,16 @@ import java.io.RandomAccessFile;
 import java.io.Serializable;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class ClientState implements Serializable {
-    private static final long serialVersionUID = 2L;
+    private static final long serialVersionUID = 3L;
 
     private final String downloadsDir;
-    private final Map<Integer, FileDescription> files = new HashMap<>();
-    private transient Map<Integer, RandomAccessFile> filesOpened;
+    private final ConcurrentMap<Integer, FileDescription> files = new ConcurrentHashMap<>();
+    private transient ConcurrentMap<Integer, RandomAccessFile> filesOpened;
 
     public ClientState(Path downloadsDir) {
         this.downloadsDir = downloadsDir.toAbsolutePath().toString();
@@ -26,29 +27,34 @@ public class ClientState implements Serializable {
     }
 
     public FileDescription getFileDescription(int id) {
-        synchronized (files) {
-            return files.get(id);
-        }
+        return files.get(id);
     }
 
     public RandomAccessFile getFile(int id) throws IOException {
-        synchronized (files) {
-            FileDescription description = getFileDescription(id);
-            if (description == null) {
-                throw new RuntimeException("Requested to open unknown file with id " + id);
+        FileDescription description = getFileDescription(id);
+        if (description == null) {
+            throw new RuntimeException("Requested to open unknown file with id " + id);
+        }
+        if (filesOpened == null) {
+            synchronized (this) {
+                if (filesOpened == null) {
+                    filesOpened = new ConcurrentHashMap<>();
+                }
             }
-            if (filesOpened == null) {
-                filesOpened = new HashMap<>();
-            }
-            RandomAccessFile result = filesOpened.get(id);
+        }
+        RandomAccessFile result;
+        synchronized (description) {
+            result = filesOpened.get(id);
             if (result == null) {
                 result = new RandomAccessFile(
                         Paths.get(downloadsDir, description.getEntry().getName()).toFile(),
                         "rw");
                 filesOpened.put(id, result);
             }
-            result.setLength(description.getEntry().getSize());
-            return result;
         }
+        synchronized (result) {
+            result.setLength(description.getEntry().getSize());
+        }
+        return result;
     }
 }
