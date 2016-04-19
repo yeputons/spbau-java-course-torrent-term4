@@ -26,7 +26,7 @@ public class ConsoleClient implements Runnable {
 
     public ConsoleClient(String[] args) {
         this.args = new LinkedList<>(Arrays.asList(args));
-        stateHolder = new StateFileHolder<>(storage, new ClientState(Paths.get(".")));
+        stateHolder = new StateFileHolder<>(storage, new ClientState(Paths.get("./downloads")));
         partSize = Integer.parseInt(System.getProperty("torrent.part_size", "10485760"));
         System.out.printf("torrent.part_size=%d\n", partSize);
     }
