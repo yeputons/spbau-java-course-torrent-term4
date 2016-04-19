@@ -112,6 +112,7 @@ public class TrackerServer {
                                     for (int fileId : r.getSeedingFiles()) {
                                         seeders.updateSource(fileId, address);
                                     }
+                                    r.answerTo(out, true);
                                 }
                             });
                         }
