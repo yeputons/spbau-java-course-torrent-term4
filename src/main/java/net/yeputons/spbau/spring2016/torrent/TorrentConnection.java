@@ -23,7 +23,8 @@ public class TorrentConnection implements Closeable {
         } catch (IOException e) {
             try {
                 socket.close();
-            } catch (IOException ignored) {
+            } catch (IOException e1) {
+                e.addSuppressed(e);
             }
             throw e;
         }
@@ -34,18 +35,35 @@ public class TorrentConnection implements Closeable {
     }
 
     @Override
-    public void close() {
+    public void close() throws IOException {
+        IOException e = null;
         try {
-            in.close();
-        } catch (IOException ignored) {
+            // should close OutputStream first in order to flush buffers to socket
+            // before it's automatically closed by closing OutputStream
+            out.close();
+        } catch (IOException e1) {
+            e = e1;
         }
         try {
-            out.close();
-        } catch (IOException ignored) {
+            in.close();
+        } catch (IOException e1) {
+            if (e != null) {
+                e.addSuppressed(e1);
+            } else {
+                e = e1;
+            }
         }
         try {
             socket.close();
-        } catch (IOException ignored) {
+        } catch (IOException e1) {
+            if (e != null) {
+                e.addSuppressed(e1);
+            } else {
+                e = e1;
+            }
+        }
+        if (e != null) {
+            throw e;
         }
     }
 }
