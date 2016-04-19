@@ -28,7 +28,7 @@ public abstract class Request<T> {
         }
         Method readFromMethod = requestTypes.get(id);
         if (readFromMethod == null) {
-            throw new UnknownRequestIdException();
+            throw new UnknownRequestIdException(id);
         }
         try {
             return (Request<?>) readFromMethod.invoke(null, in);
