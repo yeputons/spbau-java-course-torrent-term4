@@ -1,5 +1,6 @@
 package net.yeputons.spbau.spring2016.torrent;
 
+import net.yeputons.spbau.spring2016.torrent.tracker.SeedersTracker;
 import org.junit.Test;
 
 import java.net.InetSocketAddress;

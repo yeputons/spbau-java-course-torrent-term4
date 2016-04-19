@@ -1,6 +1,7 @@
 package net.yeputons.spbau.spring2016.torrent;
 
 import net.yeputons.spbau.spring2016.torrent.client.ConsoleClient;
+import net.yeputons.spbau.spring2016.torrent.tracker.TrackerServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -3,6 +3,7 @@ package net.yeputons.spbau.spring2016.torrent;
 import net.yeputons.spbau.spring2016.torrent.protocol.FileEntry;
 import net.yeputons.spbau.spring2016.torrent.protocol.ListRequest;
 import net.yeputons.spbau.spring2016.torrent.protocol.UploadRequest;
+import net.yeputons.spbau.spring2016.torrent.tracker.TrackerServer;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;

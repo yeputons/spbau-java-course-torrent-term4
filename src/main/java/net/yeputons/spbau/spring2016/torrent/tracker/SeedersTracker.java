@@ -1,4 +1,4 @@
-package net.yeputons.spbau.spring2016.torrent;
+package net.yeputons.spbau.spring2016.torrent.tracker;
 
 import java.net.InetSocketAddress;
 import java.util.*;
