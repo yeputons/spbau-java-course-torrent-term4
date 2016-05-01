@@ -15,7 +15,11 @@ import java.io.RandomAccessFile;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.BitSet;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class TorrentLeecher {
     private static final Logger LOG = LoggerFactory.getLogger(TorrentLeecher.class);
@@ -23,37 +27,48 @@ public class TorrentLeecher {
     private final TorrentConnection tracker;
     private final StateHolder<ClientState> stateHolder;
     private final FileDescription fileDescription;
-    private Thread thread;
+    private final ScheduledExecutorService executorService;
+    private final CountDownLatch finishedLatch = new CountDownLatch(1);
 
     public TorrentLeecher(TorrentConnection tracker,
                           StateHolder<ClientState> stateHolder,
-                          FileDescription fileDescription) {
+                          FileDescription fileDescription,
+                          ScheduledExecutorService executorService) {
         this.tracker = tracker;
         this.stateHolder = stateHolder;
         this.fileDescription = fileDescription;
+        this.executorService = executorService;
     }
 
     public void start() {
-        thread = new Thread(this::downloadFile);
-        thread.start();
+        LOG.info("Started downloading {}", fileDescription.getEntry());
+        this.executorService.submit(new LeechTask());
     }
 
     public void join() throws InterruptedException {
-        thread.join();
+        finishedLatch.await();
     }
 
-    private void downloadFile() {
-        FileEntry entry = fileDescription.getEntry();
-        LOG.info("Started downloading {}", entry);
+    private class LeechTask implements Runnable {
+        private final FileEntry entry = fileDescription.getEntry();
+        private final int fileId = entry.getId();
+        private BitSet downloaded;
 
-        int fileId = entry.getId();
-        BitSet downloaded = null;
-        synchronized (stateHolder.getState()) {
-            downloaded = (BitSet) fileDescription.getDownloaded().clone();
+        LeechTask() {
+            synchronized (stateHolder.getState()) {
+                downloaded = (BitSet) fileDescription.getDownloaded().clone();
+            }
         }
-        int partsCount = fileDescription.getPartsCount();
 
-        while (downloaded.cardinality() < partsCount) {
+        @Override
+        public void run() {
+            int partsCount = fileDescription.getPartsCount();
+            if (downloaded.cardinality() >= partsCount) {
+                LOG.info("Downloading of {} is finished", entry);
+                finishedLatch.countDown();
+                return;
+            }
+
             LOG.debug("Downloaded: {}/{}", downloaded.cardinality(), partsCount);
             List<InetSocketAddress> sources = null;
             try {
@@ -62,7 +77,11 @@ public class TorrentLeecher {
                 LOG.error("Unable to request sources from tracker", e);
                 return;
             }
+            Collections.shuffle(sources);
             LOG.debug("Sources: {}", sources);
+
+            boolean downloadedSomething = false;
+            loopForSources:
             for (InetSocketAddress source : sources) {
                 try (TorrentConnection peer = TorrentConnection.connect(source)) {
                     List<Integer> partsAvailable = peer.makeRequest(new StatRequest(fileId));
@@ -91,6 +110,8 @@ public class TorrentLeecher {
                                     fileDescription.getDownloaded().flip(partId);
                                 }
                             }
+                            downloadedSomething = true;
+                            break loopForSources;
                         } catch (IOException e) {
                             LOG.error("Error while saving file", e);
                             return;
@@ -100,13 +121,13 @@ public class TorrentLeecher {
                     LOG.warn("Error while communicating with peer", e);
                 }
             }
-            LOG.debug("Sleeping until next iteration");
-            try {
-                Thread.sleep(RETRY_DELAY);
-            } catch (InterruptedException ignored) {
-                break;
+            if (!downloadedSomething) {
+                LOG.debug("Sleeping until next iteration");
+                executorService.schedule(this, RETRY_DELAY, TimeUnit.MILLISECONDS);
+            } else {
+                LOG.debug("Starting next iteration right away");
+                executorService.submit(this);
             }
         }
-        LOG.info("Downloading of {} is finished", entry);
     }
 }

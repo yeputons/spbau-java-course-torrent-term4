@@ -6,6 +6,7 @@ import net.yeputons.spbau.spring2016.torrent.protocol.StatRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -75,6 +76,8 @@ public class SimpleSeeder {
                         assertArrayEquals(requests.get(i), data);
                         wrapper.getOutputStream().write(answers.get(i));
                     }
+                } catch (EOFException e) {
+                    LOG.info("Client disconnected before sending all requests", e);
                 } catch (IOException e) {
                     LOG.warn("Exception while processing client", e);
                 }

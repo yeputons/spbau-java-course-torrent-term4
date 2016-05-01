@@ -10,14 +10,18 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.stream.Collectors;
 
 public class TorrentClient {
     private static final Logger LOG = LoggerFactory.getLogger(TorrentClient.class);
+    private static final int LEECHER_TASKS_POOL_SIZE = 10;
     private final TorrentConnection tracker;
     private final StateHolder<ClientState> stateHolder;
     private TorrentSeeder seeder;
     private List<TorrentLeecher> leechers;
+    private ScheduledExecutorService leechersPool;
 
     public TorrentClient(TorrentConnection tracker, StateHolder<ClientState> stateHolder) {
         this.tracker = tracker;
@@ -33,8 +37,9 @@ public class TorrentClient {
                         .collect(Collectors.joining("\n"))
         );
         leechers = new ArrayList<>();
+        leechersPool = Executors.newScheduledThreadPool(LEECHER_TASKS_POOL_SIZE);
         for (FileDescription f : files) {
-            TorrentLeecher leecher = new TorrentLeecher(tracker, stateHolder, f);
+            TorrentLeecher leecher = new TorrentLeecher(tracker, stateHolder, f, leechersPool);
             leecher.start();
             leechers.add(leecher);
         }

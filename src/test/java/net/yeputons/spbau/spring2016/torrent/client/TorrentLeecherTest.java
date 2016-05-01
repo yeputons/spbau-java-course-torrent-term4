@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -44,7 +45,14 @@ public class TorrentLeecherTest {
         Path downloadsDir = rootFolder.getRoot().toPath();
         ClientState state = new ClientState(downloadsDir);
         state.getFiles().put(fileDescription.getEntry().getId(), fileDescription);
-        TorrentLeecher leecher = new TorrentLeecher(tracker, new StateMemoryHolder<>(state), fileDescription);
+        TorrentLeecher leecher = new TorrentLeecher(
+                tracker,
+                new StateMemoryHolder<>(state),
+                fileDescription,
+                // CHECKSTYLE.OFF: MagicNumber
+                Executors.newScheduledThreadPool(10)
+                // CHECKSTYLE.ON: MagicNumber
+        );
         leecher.start();
         leecher.join();
 
