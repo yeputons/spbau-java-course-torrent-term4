@@ -17,6 +17,8 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.util.Collections;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.stream.Collectors;
 
 public class TorrentSeeder {
@@ -26,7 +28,7 @@ public class TorrentSeeder {
     private final TorrentConnection tracker;
     private final ClientState state;
     private ServerSocket listener;
-    private Thread updatingThread;
+    private Timer updatingTimer;
     private Thread listeningThread;
     private final int updateInterval;
 
@@ -48,23 +50,22 @@ public class TorrentSeeder {
         listener.bind(new InetSocketAddress("0.0.0.0", 0));
         LOG.info("Started seeder on {}", listener.getLocalSocketAddress());
 
-        updatingThread = new Thread(() -> {
-            LOG.debug("Started updating thread");
-            while (!listener.isClosed()) {
+        updatingTimer = new Timer("updatingTimer");
+        updatingTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                if (listener.isClosed()) {
+                    LOG.info("Listener socket is closed, do not send updates to tracker anymore");
+                    updatingTimer.cancel();
+                    return;
+                }
                 try {
                     updateTracker(listener.getLocalPort());
                 } catch (IOException e) {
                     LOG.warn("Error while making update to tracker", e);
                 }
-                try {
-                    Thread.sleep(updateInterval);
-                } catch (InterruptedException e) {
-                    break;
-                }
             }
-            LOG.debug("Updating thread is terminated");
-        });
-        updatingThread.start();
+        }, 0, updateInterval);
 
         listeningThread = new Thread(() -> {
             while (true) {
@@ -93,12 +94,12 @@ public class TorrentSeeder {
     }
 
     public void shutdown() throws IOException {
-        updatingThread.interrupt();
+        updatingTimer.cancel();
         listener.close();
     }
 
     public void join() throws InterruptedException {
-        updatingThread.join();
+        updatingTimer.cancel();
         listeningThread.join();
     }
 
