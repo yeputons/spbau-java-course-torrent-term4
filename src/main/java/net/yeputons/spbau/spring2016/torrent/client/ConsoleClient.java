@@ -100,11 +100,15 @@ public class ConsoleClient implements Runnable {
         Path p = Paths.get(args.removeFirst());
         String fileName = p.getFileName().toString();
         long size = Files.size(p);
+
+        ClientState state = stateHolder.getState();
+        LOG.info("Copying file to downloads directory");
+        Files.copy(p, state.getDownloadsDir().resolve(fileName));
+
         LOG.info("Adding file {} ({} bytes) to server", fileName, size);
         int id = connection.makeRequest(new UploadRequest(fileName, size));
         LOG.info("Server confirmed upload, file id is {}", id);
 
-        ClientState state = stateHolder.getState();
         FileDescription description = new FileDescription(new FileEntry(id, fileName, size), partSize);
         description.getDownloaded().flip(0, description.getPartsCount());
         state.getFiles().put(id, description);
