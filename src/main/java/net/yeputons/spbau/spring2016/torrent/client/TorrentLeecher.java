@@ -62,27 +62,51 @@ public class TorrentLeecher {
 
         @Override
         public void run() {
-            int partsCount = fileDescription.getPartsCount();
-            if (downloaded.cardinality() >= partsCount) {
+            if (isDownloadFinished()) {
                 LOG.info("Downloading of {} is finished", entry);
                 finishedLatch.countDown();
                 return;
             }
 
+            List<InetSocketAddress> sources = getSources();
+            if (sources == null) {
+                LOG.debug("Sleeping for {} msec", RETRY_DELAY);
+                executorService.schedule(this, RETRY_DELAY, TimeUnit.MILLISECONDS);
+                return;
+            }
+
+            if (downloadSomething(sources)) {
+                LOG.debug("Starting next iteration right away");
+                executorService.submit(this);
+            } else {
+                LOG.debug("Sleeping for {} msec", RETRY_DELAY);
+                executorService.schedule(this, RETRY_DELAY, TimeUnit.MILLISECONDS);
+            }
+        }
+
+        private boolean isDownloadFinished() {
+            int partsCount = fileDescription.getPartsCount();
+            if (downloaded.cardinality() >= partsCount) {
+                return true;
+            }
             LOG.debug("Downloaded: {}/{}", downloaded.cardinality(), partsCount);
+            return false;
+        }
+
+        private List<InetSocketAddress> getSources() {
             List<InetSocketAddress> sources = null;
             try {
                 sources = tracker.makeRequest(new SourcesRequest(fileId));
             } catch (IOException e) {
-                LOG.error("Unable to request sources from tracker, will retry", e);
-                executorService.schedule(this, RETRY_DELAY, TimeUnit.MILLISECONDS);
-                return;
+                LOG.error("Unable to request sources from tracker", e);
+                return null;
             }
             Collections.shuffle(sources);
             LOG.debug("Sources: {}", sources);
+            return sources;
+        }
 
-            boolean downloadedSomething = false;
-            loopForSources:
+        private boolean downloadSomething(List<InetSocketAddress> sources) {
             for (InetSocketAddress source : sources) {
                 try (TorrentConnection peer = TorrentConnection.connect(source)) {
                     List<Integer> partsAvailable = peer.makeRequest(new StatRequest(fileId));
@@ -94,41 +118,37 @@ public class TorrentLeecher {
                         LOG.debug("Retrieving part {} from {}", partId, source);
                         ByteBuffer data = peer.makeRequest(
                                 new GetRequest(fileId, partId, fileDescription.getPartSize(partId)));
-                        ClientState state = stateHolder.getState();
                         try {
-                            RandomAccessFile file = state.getFile(fileId);
-                            synchronized (file) {
-                                file.seek(fileDescription.getPartStart(partId));
-                                file.write(data.array());
-                            }
-                            synchronized (state) {
-                                downloaded.flip(partId);
-                                fileDescription.getDownloaded().flip(partId);
-                                try {
-                                    stateHolder.save();
-                                } catch (IOException e) {
-                                    downloaded.flip(partId);
-                                    fileDescription.getDownloaded().flip(partId);
-                                }
-                            }
-                            downloadedSomething = true;
-                            break loopForSources;
+                            saveFile(data, partId);
+                            return true;
                         } catch (IOException e) {
                             LOG.error("Error while saving file, will retry", e);
-                            executorService.schedule(this, RETRY_DELAY, TimeUnit.MILLISECONDS);
-                            return;
+                            return false;
                         }
                     }
                 } catch (IOException e) {
                     LOG.warn("Error while communicating with peer", e);
                 }
             }
-            if (!downloadedSomething) {
-                LOG.debug("Sleeping until next iteration");
-                executorService.schedule(this, RETRY_DELAY, TimeUnit.MILLISECONDS);
-            } else {
-                LOG.debug("Starting next iteration right away");
-                executorService.submit(this);
+            return false;
+        }
+
+        private void saveFile(ByteBuffer data, int partId) throws IOException {
+            ClientState state = stateHolder.getState();
+            RandomAccessFile file = state.getFile(fileId);
+            synchronized (file) {
+                file.seek(fileDescription.getPartStart(partId));
+                file.write(data.array());
+            }
+            synchronized (state) {
+                downloaded.flip(partId);
+                fileDescription.getDownloaded().flip(partId);
+                try {
+                    stateHolder.save();
+                } catch (IOException e) {
+                    downloaded.flip(partId);
+                    fileDescription.getDownloaded().flip(partId);
+                }
             }
         }
     }
