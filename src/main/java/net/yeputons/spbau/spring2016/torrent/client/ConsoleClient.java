@@ -74,7 +74,7 @@ public class ConsoleClient implements Runnable {
     }
 
     private void help() {
-        System.err.println("Expected arguments: client (list|get|newfile|run) <tracker-address> [extra]");
+        System.err.println("Expected arguments: (list|get|newfile|run) <tracker-address> [extra]");
         System.err.println("Extra arguments for 'get': <file-id>");
         System.err.println("Extra arguments for 'newfile': <file-path>");
         System.err.println(
