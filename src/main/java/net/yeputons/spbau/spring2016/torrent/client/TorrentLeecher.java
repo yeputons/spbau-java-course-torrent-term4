@@ -74,7 +74,8 @@ public class TorrentLeecher {
             try {
                 sources = tracker.makeRequest(new SourcesRequest(fileId));
             } catch (IOException e) {
-                LOG.error("Unable to request sources from tracker", e);
+                LOG.error("Unable to request sources from tracker, will retry", e);
+                executorService.schedule(this, RETRY_DELAY, TimeUnit.MILLISECONDS);
                 return;
             }
             Collections.shuffle(sources);
@@ -113,7 +114,8 @@ public class TorrentLeecher {
                             downloadedSomething = true;
                             break loopForSources;
                         } catch (IOException e) {
-                            LOG.error("Error while saving file", e);
+                            LOG.error("Error while saving file, will retry", e);
+                            executorService.schedule(this, RETRY_DELAY, TimeUnit.MILLISECONDS);
                             return;
                         }
                     }
