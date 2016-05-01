@@ -3,6 +3,7 @@ package net.yeputons.spbau.spring2016.torrent.client;
 import net.yeputons.spbau.spring2016.torrent.FileDescription;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.RandomAccessFile;
 import java.io.Serializable;
 import java.nio.file.Path;
@@ -16,7 +17,7 @@ public class ClientState implements Serializable {
 
     private final String downloadsDir;
     private final ConcurrentMap<Integer, FileDescription> files = new ConcurrentHashMap<>();
-    private transient ConcurrentMap<Integer, RandomAccessFile> filesOpened;
+    private transient ConcurrentMap<Integer, RandomAccessFile> filesOpened = new ConcurrentHashMap<>();
 
     public ClientState(Path downloadsDir) {
         this.downloadsDir = downloadsDir.toAbsolutePath().toString();
@@ -34,17 +35,15 @@ public class ClientState implements Serializable {
         return files.get(id);
     }
 
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        filesOpened = new ConcurrentHashMap<>();
+    }
+
     public RandomAccessFile getFile(int id) throws IOException {
         FileDescription description = getFileDescription(id);
         if (description == null) {
             throw new RuntimeException("Requested to open unknown file with id " + id);
-        }
-        if (filesOpened == null) {
-            synchronized (this) {
-                if (filesOpened == null) {
-                    filesOpened = new ConcurrentHashMap<>();
-                }
-            }
         }
         RandomAccessFile result;
         synchronized (description) {
