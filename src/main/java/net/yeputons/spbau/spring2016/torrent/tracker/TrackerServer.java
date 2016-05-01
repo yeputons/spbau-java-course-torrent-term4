@@ -14,6 +14,10 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class TrackerServer {
     public static final int DEFAULT_PORT = 8081;
@@ -31,6 +35,7 @@ public class TrackerServer {
 
     private ServerSocket server;
     private Thread thread;
+    private ExecutorService clientThreads;
     private final int port;
     private boolean shuttedDown = false;
 
@@ -62,6 +67,7 @@ public class TrackerServer {
             }
             server = new ServerSocket();
             server.bind(new InetSocketAddress("0.0.0.0", port));
+            clientThreads = Executors.newCachedThreadPool();
         }
         LOG.info("Started server on {}", server.getLocalSocketAddress());
         thread = new Thread(() -> {
@@ -73,7 +79,7 @@ public class TrackerServer {
                     break;
                 }
                 LOG.info("New client from {}", client.getRemoteSocketAddress());
-                new Thread(() -> {
+                clientThreads.submit(() -> {
                     try (SocketDataStreamsWrapper wrapper = new SocketDataStreamsWrapper(client)) {
                         final DataInputStream in = wrapper.getInputStream();
                         final DataOutputStream out = wrapper.getOutputStream();
@@ -132,7 +138,7 @@ public class TrackerServer {
                         LOG.warn("Error while processing client request", e);
                     }
                     LOG.info("Client disconnected");
-                }).start();
+                });
             }
             LOG.info("Server on {} is terminated", server.getLocalSocketAddress());
         });
@@ -145,6 +151,7 @@ public class TrackerServer {
             if (server != null) {
                 server.close();
             }
+            clientThreads.shutdown();
             shuttedDown = true;
         }
     }
@@ -152,6 +159,9 @@ public class TrackerServer {
     public void join() throws InterruptedException {
         if (thread != null) {
             thread.join();
+        }
+        if (clientThreads != null) {
+            clientThreads.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
         }
     }
 }

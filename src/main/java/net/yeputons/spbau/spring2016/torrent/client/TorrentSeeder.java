@@ -19,6 +19,9 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class TorrentSeeder {
@@ -30,6 +33,7 @@ public class TorrentSeeder {
     private ServerSocket listener;
     private Timer updatingTimer;
     private Thread listeningThread;
+    private ExecutorService clientThreads;
     private final int updateInterval;
 
     public TorrentSeeder(TorrentConnection tracker, ClientState state) {
@@ -67,6 +71,7 @@ public class TorrentSeeder {
             }
         }, 0, updateInterval);
 
+        clientThreads = Executors.newCachedThreadPool();
         listeningThread = new Thread(() -> {
             while (true) {
                 final Socket peer;
@@ -76,14 +81,14 @@ public class TorrentSeeder {
                     break;
                 }
                 LOG.info("New client from {}", peer.getRemoteSocketAddress());
-                new Thread(() -> {
+                clientThreads.submit(() -> {
                     try (SocketDataStreamsWrapper wrapper = new SocketDataStreamsWrapper(peer)) {
                         processPeer(peer, wrapper.getInputStream(), wrapper.getOutputStream());
                     } catch (IOException e) {
                         LOG.warn("Error while processing connection from peer", e);
                     }
                     LOG.info("Client disconnected");
-                }).start();
+                });
             }
         });
         listeningThread.start();
@@ -96,11 +101,13 @@ public class TorrentSeeder {
     public void shutdown() throws IOException {
         updatingTimer.cancel();
         listener.close();
+        clientThreads.shutdown();
     }
 
     public void join() throws InterruptedException {
         updatingTimer.cancel();
         listeningThread.join();
+        clientThreads.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
     }
 
     private void updateTracker(int seedingPort) throws IOException {
