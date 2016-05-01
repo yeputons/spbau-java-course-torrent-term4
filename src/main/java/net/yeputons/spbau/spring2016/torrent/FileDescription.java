@@ -37,10 +37,6 @@ public class FileDescription implements Serializable {
         return entry;
     }
 
-    public int getPartSize() {
-        return partSize;
-    }
-
     public BitSet getDownloaded() {
         return downloaded;
     }

@@ -57,10 +57,6 @@ public class GetRequest extends ClientRequest<ByteBuffer> {
         return partId;
     }
 
-    public int getPartSize() {
-        return partSize;
-    }
-
     @Override
     public ByteBuffer makeRequest(DataInputStream in, DataOutputStream out) throws IOException {
         out.writeByte(REQUEST_ID);
