@@ -9,7 +9,11 @@ CLIENTS=5
 TMP=$(mktemp -d)
 echo Working in $TMP
 
-JAVA=$JAVA_HOME/bin/java
+if [ x"$JAVA_HOME" == x"" ]; then
+  JAVA=$JAVA_HOME/bin/java
+else
+  JAVA=`which java`
+fi
 
 cd "$PROJ"
 mvn assembly:assembly 
