@@ -35,12 +35,13 @@ public class FirmTorrentConnection implements Closeable {
         try {
             connection = TorrentConnection.connect(address);
         } catch (IOException e) {
+            String message;
             if (connection != null) {
-                LOG.warn("Unable to reconnect to " + address.toString(), e);
+                message = "Unable to reconnect to " + address.toString();
             } else {
-                LOG.warn("Unable to connect to " + address.toString(), e);
+                message = "Unable to connect to " + address.toString();
             }
-            throw e;
+            throw new IOException(message, e);
         }
     }
 
@@ -49,8 +50,13 @@ public class FirmTorrentConnection implements Closeable {
         try {
             return connection.makeRequest(r);
         } catch (IOException e) {
-            LOG.warn("Caught IOException, closing connection", e);
-            connection.close();
+            LOG.warn("Caught IOException, closing connection, rethrowing exception");
+            try {
+                connection.close();
+            } catch (Exception e1) {
+                LOG.warn("Caught IOException while closing connection, suppress");
+                e.addSuppressed(e1);
+            }
             throw e;
         }
     }
