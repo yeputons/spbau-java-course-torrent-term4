@@ -25,7 +25,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class TorrentSeeder {
-    private static final int DEFAULT_UPDATE_INTERVEL = 10 * 1000;
     private static final Logger LOG = LoggerFactory.getLogger(TorrentSeeder.class);
 
     private final FirmTorrentConnection tracker;
@@ -37,7 +36,7 @@ public class TorrentSeeder {
     private final int updateInterval;
 
     public TorrentSeeder(FirmTorrentConnection tracker, ClientState state) {
-        this(tracker, state, DEFAULT_UPDATE_INTERVEL);
+        this(tracker, state, Integer.parseInt(System.getProperty("torrent.update_interval", "1000")));
     }
 
     public TorrentSeeder(FirmTorrentConnection tracker, ClientState state, int updateInterval) {
@@ -52,7 +51,8 @@ public class TorrentSeeder {
         }
         listener = new ServerSocket();
         listener.bind(new InetSocketAddress("0.0.0.0", 0));
-        LOG.info("Started seeder on {}", listener.getLocalSocketAddress());
+        LOG.info("Started seeder on {}, update interval is {} msec",
+            listener.getLocalSocketAddress(), updateInterval);
 
         updatingTimer = new Timer("updatingTimer");
         updatingTimer.scheduleAtFixedRate(new TimerTask() {
