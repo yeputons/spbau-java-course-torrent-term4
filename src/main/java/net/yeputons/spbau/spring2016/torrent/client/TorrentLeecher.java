@@ -30,6 +30,7 @@ public class TorrentLeecher {
     private final FileDescription fileDescription;
     private final ScheduledExecutorService executorService;
     private final CountDownLatch finishedLatch = new CountDownLatch(1);
+    private final int retryDelay;
 
     public TorrentLeecher(FirmTorrentConnection tracker,
                           StateHolder<ClientState> stateHolder,
@@ -39,10 +40,11 @@ public class TorrentLeecher {
         this.stateHolder = stateHolder;
         this.fileDescription = fileDescription;
         this.executorService = executorService;
+        retryDelay = Integer.parseInt(System.getProperty("torrent.retry_delay", "1000"));
     }
 
     public void start() {
-        LOG.info("Started downloading {}", fileDescription.getEntry());
+        LOG.info("Started downloading {}, retry delay is {}", fileDescription.getEntry(), retryDelay);
         this.executorService.submit(new LeechTask());
     }
 
@@ -71,8 +73,8 @@ public class TorrentLeecher {
 
             List<InetSocketAddress> sources = getSources();
             if (sources == null) {
-                LOG.debug("Sleeping for {} msec", RETRY_DELAY);
-                executorService.schedule(this, RETRY_DELAY, TimeUnit.MILLISECONDS);
+                LOG.debug("Sleeping for {} msec", retryDelay);
+                executorService.schedule(this, retryDelay, TimeUnit.MILLISECONDS);
                 return;
             }
 
@@ -80,8 +82,8 @@ public class TorrentLeecher {
                 LOG.debug("Starting next iteration right away");
                 executorService.submit(this);
             } else {
-                LOG.debug("Sleeping for {} msec", RETRY_DELAY);
-                executorService.schedule(this, RETRY_DELAY, TimeUnit.MILLISECONDS);
+                LOG.debug("Sleeping for {} msec", retryDelay);
+                executorService.schedule(this, retryDelay, TimeUnit.MILLISECONDS);
             }
         }
 
