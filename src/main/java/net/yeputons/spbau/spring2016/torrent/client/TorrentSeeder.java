@@ -105,7 +105,6 @@ public class TorrentSeeder {
     }
 
     public void join() throws InterruptedException {
-        updatingTimer.cancel();
         listeningThread.join();
         clientThreads.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
     }
