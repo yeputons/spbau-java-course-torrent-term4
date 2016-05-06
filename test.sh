@@ -46,7 +46,7 @@ kill -9 $PIDS >/dev/null 2>&1 || true
 
 fail=0
 for ((i=1; $i <= $CLIENTS; i++)); do
-  if ! diff "$TMP/client2/$FILE_SUFFIX" "$REFERENCE_FILE" >/dev/null 2>&1; then
+  if ! diff "$TMP/client$i/$FILE_SUFFIX" "$REFERENCE_FILE" >/dev/null 2>&1; then
     echo -e "\e[31;1mFAIL\e[0m Bad file content for client $i"
     fail=1
   fi
