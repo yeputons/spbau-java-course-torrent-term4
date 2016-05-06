@@ -1,8 +1,8 @@
 package net.yeputons.spbau.spring2016.torrent.client;
 
 import net.yeputons.spbau.spring2016.torrent.FileDescription;
+import net.yeputons.spbau.spring2016.torrent.FirmTorrentConnection;
 import net.yeputons.spbau.spring2016.torrent.SocketDataStreamsWrapper;
-import net.yeputons.spbau.spring2016.torrent.TorrentConnection;
 import net.yeputons.spbau.spring2016.torrent.protocol.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +28,7 @@ public class TorrentSeeder {
     private static final int DEFAULT_UPDATE_INTERVEL = 10 * 1000;
     private static final Logger LOG = LoggerFactory.getLogger(TorrentSeeder.class);
 
-    private final TorrentConnection tracker;
+    private final FirmTorrentConnection tracker;
     private final ClientState state;
     private ServerSocket listener;
     private Timer updatingTimer;
@@ -36,11 +36,11 @@ public class TorrentSeeder {
     private ExecutorService clientThreads;
     private final int updateInterval;
 
-    public TorrentSeeder(TorrentConnection tracker, ClientState state) {
+    public TorrentSeeder(FirmTorrentConnection tracker, ClientState state) {
         this(tracker, state, DEFAULT_UPDATE_INTERVEL);
     }
 
-    public TorrentSeeder(TorrentConnection tracker, ClientState state, int updateInterval) {
+    public TorrentSeeder(FirmTorrentConnection tracker, ClientState state, int updateInterval) {
         this.tracker = tracker;
         this.state = state;
         this.updateInterval = updateInterval;

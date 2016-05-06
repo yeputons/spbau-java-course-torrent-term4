@@ -26,6 +26,10 @@ public class SocketDataStreamsWrapper implements Closeable {
         }
     }
 
+    public Socket getSocket() {
+        return socket;
+    }
+
     public DataInputStream getInputStream() {
         return in;
     }

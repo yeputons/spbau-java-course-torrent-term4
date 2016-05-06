@@ -1,6 +1,7 @@
 package net.yeputons.spbau.spring2016.torrent.client;
 
 import net.yeputons.spbau.spring2016.torrent.FileDescription;
+import net.yeputons.spbau.spring2016.torrent.FirmTorrentConnection;
 import net.yeputons.spbau.spring2016.torrent.StateFileHolder;
 import net.yeputons.spbau.spring2016.torrent.TorrentConnection;
 import net.yeputons.spbau.spring2016.torrent.tracker.TrackerServer;
@@ -143,11 +144,14 @@ public class ConsoleClient implements Runnable {
         if (args.size() != 0) {
             help();
         }
-        TorrentClient client = new TorrentClient(connection, stateHolder);
-        client.start();
-        try {
-            client.join();
-        } catch (InterruptedException ignored) {
+        try (FirmTorrentConnection firmTorrentConnection =
+            new FirmTorrentConnection(connection.getSocket().getRemoteSocketAddress())) {
+            TorrentClient client = new TorrentClient(firmTorrentConnection, stateHolder);
+            client.start();
+            try {
+                client.join();
+            } catch (InterruptedException ignored) {
+            }
         }
     }
 }

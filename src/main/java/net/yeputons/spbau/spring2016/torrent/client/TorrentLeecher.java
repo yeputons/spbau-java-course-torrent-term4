@@ -1,6 +1,7 @@
 package net.yeputons.spbau.spring2016.torrent.client;
 
 import net.yeputons.spbau.spring2016.torrent.FileDescription;
+import net.yeputons.spbau.spring2016.torrent.FirmTorrentConnection;
 import net.yeputons.spbau.spring2016.torrent.StateHolder;
 import net.yeputons.spbau.spring2016.torrent.TorrentConnection;
 import net.yeputons.spbau.spring2016.torrent.protocol.FileEntry;
@@ -24,13 +25,13 @@ import java.util.concurrent.TimeUnit;
 public class TorrentLeecher {
     private static final Logger LOG = LoggerFactory.getLogger(TorrentLeecher.class);
     private static final int RETRY_DELAY = 1000;
-    private final TorrentConnection tracker;
+    private final FirmTorrentConnection tracker;
     private final StateHolder<ClientState> stateHolder;
     private final FileDescription fileDescription;
     private final ScheduledExecutorService executorService;
     private final CountDownLatch finishedLatch = new CountDownLatch(1);
 
-    public TorrentLeecher(TorrentConnection tracker,
+    public TorrentLeecher(FirmTorrentConnection tracker,
                           StateHolder<ClientState> stateHolder,
                           FileDescription fileDescription,
                           ScheduledExecutorService executorService) {
