@@ -90,7 +90,7 @@ public class TorrentSeeder {
                     LOG.info("Client disconnected");
                 });
             }
-        });
+        }, "seeder-listen");
         listeningThread.start();
     }
 
