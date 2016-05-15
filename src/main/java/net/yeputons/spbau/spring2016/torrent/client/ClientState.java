@@ -27,7 +27,7 @@ public class ClientState implements Serializable {
         return Paths.get(downloadsDir);
     }
 
-    Map<Integer, FileDescription> getFiles() {
+    public Map<Integer, FileDescription> getFiles() {
         return files;
     }
 
