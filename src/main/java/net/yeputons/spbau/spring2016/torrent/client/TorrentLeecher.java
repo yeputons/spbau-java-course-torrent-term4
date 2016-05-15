@@ -151,6 +151,7 @@ public class TorrentLeecher {
                 } catch (IOException e) {
                     downloaded.flip(partId);
                     fileDescription.getDownloaded().flip(partId);
+                    throw e;
                 }
             }
         }
