@@ -24,7 +24,6 @@ import java.util.concurrent.TimeUnit;
 
 public class TorrentLeecher {
     private static final Logger LOG = LoggerFactory.getLogger(TorrentLeecher.class);
-    private static final int RETRY_DELAY = 1000;
     private final FirmTorrentConnection tracker;
     private final StateHolder<ClientState> stateHolder;
     private final FileDescription fileDescription;
