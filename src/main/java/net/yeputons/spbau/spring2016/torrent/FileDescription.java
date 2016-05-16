@@ -49,6 +49,10 @@ public class FileDescription implements Serializable {
         return partId * partSize;
     }
 
+    public int getPartSize() {
+        return partSize;
+    }
+
     public int getPartSize(int partId) {
         if (partId + 1 < getPartsCount()) {
             return partSize;
