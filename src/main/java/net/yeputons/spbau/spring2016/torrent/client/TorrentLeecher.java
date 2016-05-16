@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 public class TorrentLeecher {
     private static final Logger LOG = LoggerFactory.getLogger(TorrentLeecher.class);
@@ -28,8 +29,11 @@ public class TorrentLeecher {
     private final StateHolder<ClientState> stateHolder;
     private final FileDescription fileDescription;
     private final ScheduledExecutorService executorService;
-    private final CountDownLatch finishedLatch = new CountDownLatch(1);
+    private final CountDownLatch terminatedLatch = new CountDownLatch(1);
     private final int retryDelay;
+    private Consumer<TorrentLeecher> progressListener;
+    private Consumer<TorrentLeecher> completeListener;
+    private volatile boolean shuttingDown = false;
 
     public TorrentLeecher(FirmTorrentConnection tracker,
                           StateHolder<ClientState> stateHolder,
@@ -42,13 +46,26 @@ public class TorrentLeecher {
         retryDelay = Integer.parseInt(System.getProperty("torrent.retry_delay", "1000"));
     }
 
+    public void setProgressListener(Consumer<TorrentLeecher> progressListener) {
+        this.progressListener = progressListener;
+    }
+
+    public void setCompleteListener(Consumer<TorrentLeecher> completeListener) {
+        this.completeListener = completeListener;
+    }
+
     public void start() {
         LOG.info("Started downloading {}, retry delay is {}", fileDescription.getEntry(), retryDelay);
         this.executorService.submit(new LeechTask());
     }
 
     public void join() throws InterruptedException {
-        finishedLatch.await();
+        terminatedLatch.await();
+    }
+
+    public void shutdown() {
+        LOG.info("Shutting down leecher for {}", fileDescription.getEntry());
+        shuttingDown = true;
     }
 
     private class LeechTask implements Runnable {
@@ -66,7 +83,18 @@ public class TorrentLeecher {
         public void run() {
             if (isDownloadFinished()) {
                 LOG.info("Downloading of {} is finished", entry);
-                finishedLatch.countDown();
+                terminatedLatch.countDown();
+                if (completeListener != null) {
+                    completeListener.accept(TorrentLeecher.this);
+                }
+                if (progressListener != null) {
+                    progressListener.accept(TorrentLeecher.this);
+                }
+                return;
+            }
+            if (shuttingDown) {
+                LOG.info("Leecher for {} is terminating", fileDescription.getEntry());
+                terminatedLatch.countDown();
                 return;
             }
 
@@ -152,6 +180,9 @@ public class TorrentLeecher {
                     fileDescription.getDownloaded().flip(partId);
                     throw e;
                 }
+            }
+            if (progressListener != null) {
+                progressListener.accept(TorrentLeecher.this);
             }
         }
     }
