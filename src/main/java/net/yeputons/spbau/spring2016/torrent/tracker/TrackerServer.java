@@ -81,7 +81,7 @@ public class TrackerServer {
                 clientThreads.submit(new ClientHandler(client));
             }
             LOG.info("Server on {} is terminated", server.getLocalSocketAddress());
-        });
+        }, "tracker-listen");
         thread.start();
     }
 

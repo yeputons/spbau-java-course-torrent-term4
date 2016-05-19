@@ -1,7 +1,7 @@
 package net.yeputons.spbau.spring2016.torrent.client;
 
 import net.yeputons.spbau.spring2016.torrent.FileDescription;
-import net.yeputons.spbau.spring2016.torrent.TorrentConnection;
+import net.yeputons.spbau.spring2016.torrent.FirmTorrentConnection;
 import net.yeputons.spbau.spring2016.torrent.protocol.FileEntry;
 import net.yeputons.spbau.spring2016.torrent.protocol.GetRequest;
 import net.yeputons.spbau.spring2016.torrent.protocol.StatRequest;
@@ -17,6 +17,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -53,31 +54,46 @@ public class TorrentSeederTest {
 
     @Test
     public void testUpdateTracker() throws IOException, InterruptedException {
-        TorrentConnection tracker = mock(TorrentConnection.class);
+        FirmTorrentConnection tracker = mock(FirmTorrentConnection.class);
         // CHECKSTYLE.OFF: MagicNumber
         TorrentSeeder seeder = new TorrentSeeder(tracker, state, 100);
         // CHECKSTYLE.ON: MagicNumber
 
+        AtomicInteger updateRequestId = new AtomicInteger();
         Semaphore waitingForRequest = new Semaphore(1);
         waitingForRequest.acquire();
         when(tracker.makeRequest(new UpdateRequest(anyInt(), Arrays.asList(1)))).thenAnswer((r) -> {
+            int id = updateRequestId.incrementAndGet();
             waitingForRequest.release();
+            // CHECKSTYLE.OFF: MagicNumber
+            if (id == 2) {
+            // CHECKSTYLE.ON: MagicNumber
+                throw new IOException("Test exception");
+            }
             return true;
         });
 
         seeder.start();
-        waitingForRequest.acquire();
-        waitingForRequest.acquire();
+        waitingForRequest.acquire(); // 1
+        waitingForRequest.acquire(); // 2
+        waitingForRequest.acquire(); // 3
 
         // CHECKSTYLE.OFF: MagicNumber
         state.getFiles().put(2, new FileDescription(new FileEntry(2, "file2.txt", 50), 35));
         // CHECKSTYLE.ON: MagicNumber
         when(tracker.makeRequest(new UpdateRequest(anyInt(), Arrays.asList(1, 2)))).thenAnswer((r) -> {
+            int id = updateRequestId.incrementAndGet();
             waitingForRequest.release();
+            // CHECKSTYLE.OFF: MagicNumber
+            if (id == 5) {
+            // CHECKSTYLE.ON: MagicNumber
+                throw new IOException("Test exception");
+            }
             return true;
         });
-        waitingForRequest.acquire();
-        waitingForRequest.acquire();
+        waitingForRequest.acquire(); // 4
+        waitingForRequest.acquire(); // 5
+        waitingForRequest.acquire(); // 6
 
         seeder.shutdown();
         seeder.join();
@@ -87,7 +103,7 @@ public class TorrentSeederTest {
     public void testStat() throws IOException, InterruptedException {
         TorrentSeeder seeder = createSeeder();
 
-        try (TorrentConnection connection = TorrentConnection.connect(seeder.getAddress())) {
+        try (FirmTorrentConnection connection = new FirmTorrentConnection(seeder.getAddress())) {
             assertEquals(Arrays.asList(1), connection.makeRequest(new StatRequest(1)));
             state.getFileDescription(1).getDownloaded().set(2);
             assertEquals(Arrays.asList(1, 2), connection.makeRequest(new StatRequest(1)));
@@ -101,7 +117,7 @@ public class TorrentSeederTest {
     public void testGet() throws IOException, InterruptedException {
         TorrentSeeder seeder = createSeeder();
 
-        try (TorrentConnection connection = TorrentConnection.connect(seeder.getAddress())) {
+        try (FirmTorrentConnection connection = new FirmTorrentConnection(seeder.getAddress())) {
             // CHECKSTYLE.OFF: MagicNumber
             ByteBuffer result1 = connection.makeRequest(new GetRequest(1, 1, file.getPartSize(1)));
             byte[] expected1 = new byte[35];
@@ -122,7 +138,7 @@ public class TorrentSeederTest {
     }
 
     private TorrentSeeder createSeeder() throws IOException {
-        TorrentConnection tracker = mock(TorrentConnection.class);
+        FirmTorrentConnection tracker = mock(FirmTorrentConnection.class);
         when(tracker.makeRequest(any(UpdateRequest.class))).thenReturn(true);
         TorrentSeeder seeder = new TorrentSeeder(tracker, state);
         seeder.start();

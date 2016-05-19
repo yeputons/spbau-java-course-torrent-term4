@@ -1,8 +1,8 @@
 package net.yeputons.spbau.spring2016.torrent.client;
 
 import net.yeputons.spbau.spring2016.torrent.FileDescription;
+import net.yeputons.spbau.spring2016.torrent.FirmTorrentConnection;
 import net.yeputons.spbau.spring2016.torrent.StateHolder;
-import net.yeputons.spbau.spring2016.torrent.TorrentConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,13 +17,13 @@ import java.util.stream.Collectors;
 public class TorrentClient {
     private static final Logger LOG = LoggerFactory.getLogger(TorrentClient.class);
     private static final int LEECHER_TASKS_POOL_SIZE = 10;
-    private final TorrentConnection tracker;
+    private final FirmTorrentConnection tracker;
     private final StateHolder<ClientState> stateHolder;
     private TorrentSeeder seeder;
     private List<TorrentLeecher> leechers;
     private ScheduledExecutorService leechersPool;
 
-    public TorrentClient(TorrentConnection tracker, StateHolder<ClientState> stateHolder) {
+    public TorrentClient(FirmTorrentConnection tracker, StateHolder<ClientState> stateHolder) {
         this.tracker = tracker;
         this.stateHolder = stateHolder;
         seeder = new TorrentSeeder(tracker, stateHolder.getState());

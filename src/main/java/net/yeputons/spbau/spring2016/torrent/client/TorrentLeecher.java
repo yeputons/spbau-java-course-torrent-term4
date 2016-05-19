@@ -1,6 +1,7 @@
 package net.yeputons.spbau.spring2016.torrent.client;
 
 import net.yeputons.spbau.spring2016.torrent.FileDescription;
+import net.yeputons.spbau.spring2016.torrent.FirmTorrentConnection;
 import net.yeputons.spbau.spring2016.torrent.StateHolder;
 import net.yeputons.spbau.spring2016.torrent.TorrentConnection;
 import net.yeputons.spbau.spring2016.torrent.protocol.FileEntry;
@@ -24,13 +25,14 @@ import java.util.concurrent.TimeUnit;
 public class TorrentLeecher {
     private static final Logger LOG = LoggerFactory.getLogger(TorrentLeecher.class);
     private static final int RETRY_DELAY = 1000;
-    private final TorrentConnection tracker;
+    private final FirmTorrentConnection tracker;
     private final StateHolder<ClientState> stateHolder;
     private final FileDescription fileDescription;
     private final ScheduledExecutorService executorService;
     private final CountDownLatch finishedLatch = new CountDownLatch(1);
+    private final int retryDelay;
 
-    public TorrentLeecher(TorrentConnection tracker,
+    public TorrentLeecher(FirmTorrentConnection tracker,
                           StateHolder<ClientState> stateHolder,
                           FileDescription fileDescription,
                           ScheduledExecutorService executorService) {
@@ -38,10 +40,11 @@ public class TorrentLeecher {
         this.stateHolder = stateHolder;
         this.fileDescription = fileDescription;
         this.executorService = executorService;
+        retryDelay = Integer.parseInt(System.getProperty("torrent.retry_delay", "1000"));
     }
 
     public void start() {
-        LOG.info("Started downloading {}", fileDescription.getEntry());
+        LOG.info("Started downloading {}, retry delay is {}", fileDescription.getEntry(), retryDelay);
         this.executorService.submit(new LeechTask());
     }
 
@@ -70,8 +73,8 @@ public class TorrentLeecher {
 
             List<InetSocketAddress> sources = getSources();
             if (sources == null) {
-                LOG.debug("Sleeping for {} msec", RETRY_DELAY);
-                executorService.schedule(this, RETRY_DELAY, TimeUnit.MILLISECONDS);
+                LOG.debug("Sleeping for {} msec", retryDelay);
+                executorService.schedule(this, retryDelay, TimeUnit.MILLISECONDS);
                 return;
             }
 
@@ -79,8 +82,8 @@ public class TorrentLeecher {
                 LOG.debug("Starting next iteration right away");
                 executorService.submit(this);
             } else {
-                LOG.debug("Sleeping for {} msec", RETRY_DELAY);
-                executorService.schedule(this, RETRY_DELAY, TimeUnit.MILLISECONDS);
+                LOG.debug("Sleeping for {} msec", retryDelay);
+                executorService.schedule(this, retryDelay, TimeUnit.MILLISECONDS);
             }
         }
 
@@ -148,6 +151,7 @@ public class TorrentLeecher {
                 } catch (IOException e) {
                     downloaded.flip(partId);
                     fileDescription.getDownloaded().flip(partId);
+                    throw e;
                 }
             }
         }
