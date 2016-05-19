@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class TorrentSeeder {
+    public static final int DEFAULT_UPDATE_INTERVAL = 1000;
     private static final Logger LOG = LoggerFactory.getLogger(TorrentSeeder.class);
 
     private final FirmTorrentConnection tracker;
@@ -36,7 +37,11 @@ public class TorrentSeeder {
     private final int updateInterval;
 
     public TorrentSeeder(FirmTorrentConnection tracker, ClientState state) {
-        this(tracker, state, Integer.parseInt(System.getProperty("torrent.update_interval", "1000")));
+        this(tracker, state,
+                Integer.parseInt(System.getProperty(
+                        "torrent.update_interval",
+                        Integer.toString(DEFAULT_UPDATE_INTERVAL)
+                )));
     }
 
     public TorrentSeeder(FirmTorrentConnection tracker, ClientState state, int updateInterval) {
